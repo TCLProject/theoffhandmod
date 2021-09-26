@@ -1,0 +1,28 @@
+[
+{
+  "modid": "theoffhandmod",
+  "name": "The Offhand Mod",
+  "description": "My interpretation of how the offhand should exist in Minecraft.",
+  "version": "1.0a",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["TCLProject"],
+  "credits": "The Battlegear author/s! Well done for opensourcing your mod!",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+},
+{
+"modid": "battlegear2",
+"name": "Mine & Blade Battlegear 2",
+"description": "A WIP, open-source combat mod, focusing on groundbreaking features and balanced combat",
+"version": "1.0.8.1",
+"mcversion": "$mcversion",
+"logoFile": "",
+"url": "http://www.curse.com/mc-mods/minecraft/mb-battlegear-2",
+"updateUrl": "",
+"authorList": ["nerd-boy", "GotoLink", "coolAlias"],
+"credits": "By nerd-boy & GotoLink, with help from coolAlias"
+}
+]

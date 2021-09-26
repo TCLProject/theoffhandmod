@@ -1,0 +1,87 @@
+﻿tab.battle.title=M&B Battlegear 2
+
+item.battlegear2:heraldric.name=Blason
+item.battlegear2:chain.name=Chaine
+item.battlegear2:quiver.name=Carquois
+
+item.battlegear2:mb.arrow.ender.name=Flèche d'Ender
+item.battlegear2:mb.arrow.explosive.name=Flèche Explosive
+item.battlegear2:mb.arrow.flame.name=Flèche de Feu
+item.battlegear2:mb.arrow.piercing.name=Flèche Aiguisée
+item.battlegear2:mb.arrow.piercing.name=Flèche Empoisonnée
+item.battlegear2:mb.arrow.mystery.name=Flèche Mystère
+item.battlegear2:mb.arrow.mystery.name=Flèche Vampire
+
+item.battlegear2:dagger.wood.name=Dague en bois
+item.battlegear2:dagger.stone.name=Dague en pierre
+item.battlegear2:dagger.iron.name=Dague en fer
+item.battlegear2:dagger.diamond.name=Dague en diamant
+item.battlegear2:dagger.gold.name=Dague en or
+
+item.battlegear2:waraxe.wood.name=Hache de guerre en bois
+item.battlegear2:waraxe.stone.name=Hache de guerre en pierre
+item.battlegear2:waraxe.iron.name=Hache de guerre en fer
+item.battlegear2:waraxe.diamond.name=Hache de guerre en diamant
+item.battlegear2:waraxe.gold.name=Hache de guerre en or
+
+item.battlegear2:mace.wood.name=Massue en bois
+item.battlegear2:mace.stone.name=Massue en bois
+item.battlegear2:mace.iron.name=Massue en bois
+item.battlegear2:mace.diamond.name=Massue en bois
+item.battlegear2:mace.gold.name=Massue en or
+
+item.battlegear2:spear.wood.name=Lance en bois
+item.battlegear2:spear.stone.name=Lance en pierre
+item.battlegear2:spear.iron.name=Lance en fer
+item.battlegear2:spear.diamond.name=Lance en diamant
+item.battlegear2:spear.gold.name=Lance en or
+
+item.battlegear2:shield.wood.name=Bouclier de bois
+item.battlegear2:shield.hide.name=Bouclier en peau
+item.battlegear2:shield.iron.name=Bouclier de fer
+item.battlegear2:shield.diamond.name=Bouclier de diamant
+item.battlegear2:shield.gold.name=Bouclier en or
+
+item.battlegear2:knights_armour.helmet.name=Heaume de chevalier
+item.battlegear2:knights_armour.plate.name=Cuirasse de chevalier
+item.battlegear2:knights_armour.legs.name=Jambiere de chevalier
+item.battlegear2:knights_armour.boots.name=Bottes de chevalier
+
+item.battlegear2:cloak.name=Cape
+
+enchantment.bash.weightless=Retour de Frappe de Bouclier
+enchantment.bash.power=Puissance de Frappe de Bouclier
+enchantment.bash.damage=Bouclier d'Epines
+enchantment.shield.usage=Bouclier Efficace
+enchantment.shield.recover=Récupération de Bouclier
+enchantment.bow.loot=Chance
+enchantment.bow.charge=Souplesse
+
+tile.battlegear2:banner.name=Etendard
+
+sigil.pattern.title=Motif
+sigil.icon.title=Symbole
+sigil.icon_pos.title=Position du symbole
+sigil.colour1.title=Couleur 1
+sigil.colour2.title=Couleur 2
+sigil.icon_colour1.title=Symbole%nCouleur 1
+sigil.icon_colour2.title=Symbole%nCouleur 2
+sigil.banner.title=Banniere
+sigil.helm.title=Heaume
+sigil.colour.select=Selection
+
+gui.sigil.add=Ajout
+gui.sigil.remove=Enleve
+gui.sigil.crest=Cimier
+gui.sigil.pattern=Fond
+
+attribute.name.weapon.penetrateArmor=Pénétration d'armure
+attribute.name.weapon.extendedReach=Allonge
+attribute.name.weapon.daze=Etourdissement
+attribute.name.weapon.attackSpeed=Vitesse
+attribute.name.weapon.backstab=Coup en traitre
+attribute.name.weapon.mountedBonus=Dégat sur monture
+attribute.shield.block.time=%s s Block
+attribute.shield.arrow.count=%s Flèches
+attribute.quiver.arrow.empty=Vide
+attribute.quiver.arrow.count=Flèches
