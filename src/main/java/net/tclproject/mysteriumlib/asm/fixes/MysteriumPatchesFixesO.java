@@ -3,15 +3,18 @@ package net.tclproject.mysteriumlib.asm.fixes;
 import static net.minecraftforge.client.IItemRenderer.ItemRenderType.EQUIPPED_FIRST_PERSON;
 import static net.minecraftforge.client.IItemRenderer.ItemRenderType.FIRST_PERSON_MAP;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Field;
+
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 
+import cpw.mods.fml.common.eventhandler.Event;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import mods.battlegear2.api.core.BattlegearUtils;
-import mods.battlegear2.api.core.IBattlePlayer;
 import mods.battlegear2.api.core.InventoryPlayerBattle;
-import mods.battlegear2.client.utils.BattlegearRenderHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.entity.EntityClientPlayerMP;
@@ -37,6 +40,7 @@ import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.init.Items;
+import net.minecraft.inventory.Slot;
 import net.minecraft.item.EnumAction;
 import net.minecraft.item.Item;
 import net.minecraft.item.Item.ToolMaterial;
@@ -46,21 +50,32 @@ import net.minecraft.item.ItemMap;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
 import net.minecraft.item.ItemTool;
+import net.minecraft.network.NetHandlerPlayServer;
+import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
+import net.minecraft.network.play.server.S02PacketChat;
+import net.minecraft.network.play.server.S23PacketBlockChange;
+import net.minecraft.network.play.server.S2FPacketSetSlot;
 import net.minecraft.potion.Potion;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.stats.AchievementList;
 import net.minecraft.stats.StatList;
+import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IIcon;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.MovingObjectPosition.MovingObjectType;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.MapData;
 import net.minecraftforge.client.IItemRenderer;
 import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.entity.player.ArrowLooseEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.tclproject.mysteriumlib.asm.annotations.EnumReturnSetting;
 import net.tclproject.mysteriumlib.asm.annotations.Fix;
 import net.tclproject.mysteriumlib.asm.annotations.ReturnedValue;
@@ -196,6 +211,20 @@ public class MysteriumPatchesFixesO {
 	private static void enableStandardShading() {
 		RenderHelper.enableStandardItemLighting();
 	}
+	
+	// Reflection way of getting the serverController inside NetServerPlayHandler. Not needed yet but might be needed in the future.
+//	private static final MethodHandle fieldGet;
+//	
+//	static {
+//	    Field field;
+//		try {
+//			field = NetHandlerPlayServer.class.getDeclaredField("field_147367_d");
+//		    field.setAccessible(true);
+//		    fieldGet = MethodHandles.publicLookup().unreflectGetter(field);
+//		} catch (final Exception e) {
+//			throw new RuntimeException("Failed to create fieldGet of serverController instance in static block.", e);
+//		}
+//	}
 
 	@SideOnly(Side.CLIENT)
 	public static void customRenderItemInFirstPerson(ItemRenderer iitm, float p_78440_1_)
@@ -343,8 +372,10 @@ public class MysteriumPatchesFixesO {
 
             if (entityclientplayermp.getItemInUseCount() > 0)
             {
-                EnumAction enumaction = EnumAction.none;
-
+                EnumAction enumaction = ((InventoryPlayerBattle)entityclientplayermp.inventory).getCurrentItem().getItemUseAction();
+                if (enumaction != entityclientplayermp.getItemInUse().getItemUseAction()) enumaction = EnumAction.none;
+                if (!Minecraft.getMinecraft().gameSettings.keyBindAttack.getIsKeyPressed()) enumaction = EnumAction.none;
+                
                 if (enumaction == EnumAction.eat || enumaction == EnumAction.drink)
                 {
                     f6 = entityclientplayermp.getItemInUseCount() - p_78440_1_ + 1.0F;
@@ -385,8 +416,10 @@ public class MysteriumPatchesFixesO {
 
             if (entityclientplayermp.getItemInUseCount() > 0)
             {
-                EnumAction enumaction1 = EnumAction.none;
-
+            	EnumAction enumaction1 = ((InventoryPlayerBattle)entityclientplayermp.inventory).getCurrentItem().getItemUseAction();
+            	if (enumaction1 != entityclientplayermp.getItemInUse().getItemUseAction()) enumaction1 = EnumAction.none;
+            	if (!Minecraft.getMinecraft().gameSettings.keyBindAttack.getIsKeyPressed()) enumaction1 = EnumAction.none;
+            	
                 if (enumaction1 == EnumAction.block)
                 {
                     GL11.glTranslatef(-0.5F, 0.2F, 0.0F);
@@ -394,7 +427,7 @@ public class MysteriumPatchesFixesO {
                     GL11.glRotatef(-80.0F, 1.0F, 0.0F, 0.0F);
                     GL11.glRotatef(60.0F, 0.0F, 1.0F, 0.0F);
                 }
-                else if (entityclientplayermp.inventory.getCurrentItem().getItem() instanceof ItemBow)
+                else if (enumaction1 == EnumAction.bow)
                 {
                     GL11.glRotatef(-18.0F, 0.0F, 0.0F, 1.0F);
                     GL11.glRotatef(-12.0F, 0.0F, 1.0F, 0.0F);

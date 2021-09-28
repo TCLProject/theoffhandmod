@@ -35,9 +35,6 @@ public class CommonProxy {
 
     public void doSpecialAction(EntityPlayer entityPlayer, ItemStack item) {}
 
-	public void tryUseTConstruct() {
-	}
-
     public void tryUseDynamicLight(EntityPlayer player, ItemStack stack){
     }
 

@@ -83,8 +83,10 @@ public class OffhandEventHandler {
 			boolean reversedIt = false;
 			if (!MysteriumPatchesFixesO.shouldNotOverride) reversedIt = true;
 			MysteriumPatchesFixesO.shouldNotOverride = true;
+			OFFMagicNetwork.dispatcher.sendToServer(new OverrideSyncServer(Minecraft.getMinecraft().thePlayer));
 			Minecraft.getMinecraft().func_147121_ag();
 			if (reversedIt) MysteriumPatchesFixesO.shouldNotOverride = false;
+			OFFMagicNetwork.dispatcher.sendToServer(new OverrideSyncServer(Minecraft.getMinecraft().thePlayer));
 		}
 		if(event.button == 0 && !event.buttonstate && cancelone) {
 			cancelone=false;
@@ -127,14 +129,24 @@ public class OffhandEventHandler {
         {
 			ItemStack itemstack = ((InventoryPlayerBattle)event.player.inventory).extraItems[InventoryPlayerBattle.OFFSET + i + 4 - InventoryPlayerBattle.OFFSET];
 			if (itemstack != event.player.inventory.getStackInSlot(i)) {
-				((InventoryPlayerBattle)event.player.inventory).setInventorySlotContents(InventoryPlayerBattle.OFFSET + i + 4, event.player.inventory.getStackInSlot(i));
+				if (event.player.inventory.getStackInSlot(i) == null || event.player.inventory.getStackInSlot(i).stackSize == 0) {
+					((InventoryPlayerBattle)event.player.inventory).setInventorySlotContents(InventoryPlayerBattle.OFFSET + i + 4, null);
+					event.player.inventory.setInventorySlotContents(i, null);
+				}
+				else ((InventoryPlayerBattle)event.player.inventory).setInventorySlotContents(InventoryPlayerBattle.OFFSET + i + 4, event.player.inventory.getStackInSlot(i));
+				event.player.inventory.markDirty();
 			}
         }
 	   for (int i = 4; i < 8; ++i)
        {
 			ItemStack itemstack = ((InventoryPlayerBattle)event.player.inventory).extraItems[InventoryPlayerBattle.OFFSET + i - 4 - InventoryPlayerBattle.OFFSET];
 			if (itemstack != event.player.inventory.getStackInSlot(i)) {
-				((InventoryPlayerBattle)event.player.inventory).setInventorySlotContents(InventoryPlayerBattle.OFFSET + i - 4, event.player.inventory.getStackInSlot(i));
+				if (event.player.inventory.getStackInSlot(i) == null || event.player.inventory.getStackInSlot(i).stackSize == 0) {
+					((InventoryPlayerBattle)event.player.inventory).setInventorySlotContents(InventoryPlayerBattle.OFFSET + i - 4, null);
+					event.player.inventory.setInventorySlotContents(i, null);
+				}
+				else ((InventoryPlayerBattle)event.player.inventory).setInventorySlotContents(InventoryPlayerBattle.OFFSET + i - 4, event.player.inventory.getStackInSlot(i));
+				event.player.inventory.markDirty();
 			}
        }
    }
@@ -163,7 +175,13 @@ public class OffhandEventHandler {
 	   Minecraft mc = Minecraft.getMinecraft();
 
 	   if (Minecraft.getMinecraft().rightClickDelayTimer == 0 && Minecraft.getMinecraft().gameSettings.keyBindAttack.getIsKeyPressed() && !BattlegearUtils.rightclickconfirmed && Minecraft.getMinecraft().thePlayer.inventory.getCurrentItem() != null && Minecraft.getMinecraft().thePlayer.inventory.getCurrentItem().getItem() instanceof ItemBlock) { // places blocks continuously if left click is held with block in hand
+		   boolean reversedIt = false;
+		   if (!MysteriumPatchesFixesO.shouldNotOverride) reversedIt = true;
+		   MysteriumPatchesFixesO.shouldNotOverride = true;
+		   OFFMagicNetwork.dispatcher.sendToServer(new OverrideSyncServer(Minecraft.getMinecraft().thePlayer));
 		   mc.func_147121_ag();
+		   if (reversedIt) MysteriumPatchesFixesO.shouldNotOverride = false;
+		   OFFMagicNetwork.dispatcher.sendToServer(new OverrideSyncServer(Minecraft.getMinecraft().thePlayer));
 	   }
 	   
        if (!((IBattlePlayer) mc.thePlayer).isBattlemode()) {

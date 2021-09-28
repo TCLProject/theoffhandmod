@@ -20,6 +20,7 @@ import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.util.EnumHelper;
+import net.tclproject.theoffhandmod.OffhandConfig;
 
 import java.util.Map;
 
@@ -53,7 +54,7 @@ public class Battlegear {
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
-        BattlegearConfig.registerRecipes();
+        if (OffhandConfig.btgearItems) BattlegearConfig.registerRecipes();
         QuiverArrowRegistry.addArrowToRegistry(Items.arrow, EntityArrow.class);
         packetHandler = new BattlegearPacketHandeler();
         packetHandler.register();
@@ -62,9 +63,6 @@ public class Battlegear {
 
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
-        if(Loader.isModLoaded("TConstruct")){//Tinker's Construct support for tabs in main inventory
-            proxy.tryUseTConstruct();
-        }
         if(Loader.isModLoaded("DynamicLights_thePlayer")){//Dynamic Light support for held light in left hand
             proxy.tryUseDynamicLight(null, null);
         }

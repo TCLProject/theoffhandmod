@@ -227,10 +227,10 @@ public final class BattlegearRenderHelper {
                             var11 = var11 * var11 * var11;
                             var12 = 1.0F - var11;
                             GL11.glTranslatef(0.0F, MathHelper.abs(MathHelper.cos(var21 / 4.0F * (float) Math.PI) * 0.1F) * (float) ((double) var10 > 0.2D ? 1 : 0), 0.0F);
-                            GL11.glTranslatef(var12 * 0.6F, -var12 * 0.5F, 0.0F);
-                            GL11.glRotatef(var12 * 90.0F, 0.0F, 1.0F, 0.0F);
-                            GL11.glRotatef(var12 * 10.0F, 1.0F, 0.0F, 0.0F);
-                            GL11.glRotatef(var12 * 30.0F, 0.0F, 0.0F, 1.0F);
+                            GL11.glTranslatef(var12 * 0.1F, -var12 * 0.1F, 0.0F);
+                            GL11.glRotatef(var12 * 2.0F, 0.0F, 1.0F, 0.0F);
+                            GL11.glRotatef(var12 * 5.0F, 1.0F, 0.0F, 0.0F);
+                            GL11.glRotatef(var12 * 3.0F, 0.0F, 0.0F, 1.0F);
                         }
                     } else {
                         var20 = ((IBattlePlayer)player).getOffSwingProgress(frame);

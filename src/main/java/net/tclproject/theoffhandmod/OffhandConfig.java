@@ -11,8 +11,9 @@ import net.minecraftforge.common.config.Configuration;
 public class OffhandConfig {
 
 	public static Configuration config;
+	public static boolean btgearItems = false;
 
-	public static String CATEGORY_RENDER = "Visuals";
+	public static String CATEGORY_EXTRA = "Extras";
 
 	public static void init(String configDir, FMLPreInitializationEvent event) {
 
@@ -26,6 +27,8 @@ public class OffhandConfig {
 	}
 
 	private static void loadConfiguration() {
+		
+		btgearItems = config.getBoolean("Battlegear 2 Blocks, Items and Enchants", CATEGORY_EXTRA, false, "Option to re-enable the items, blocks, enchants and other content battlegear adds.");
 
 		if (config.hasChanged()) {
 			config.save();

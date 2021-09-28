@@ -32,6 +32,7 @@ import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.oredict.OreDictionary;
 import net.minecraftforge.oredict.RecipeSorter;
 import net.minecraftforge.oredict.ShapedOreRecipe;
+import net.tclproject.theoffhandmod.OffhandConfig;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -122,18 +123,18 @@ public class BattlegearConfig {
         comments[0] = sb.toString();
         disabledItems = config.get(config.CATEGORY_GENERAL, "Disabled Items", new String[0], comments[0]).setRequiresMcRestart(true).getStringList();
 
-        if(Arrays.deepEquals(disabledItems, itemNames)){
+        if(Arrays.deepEquals(disabledItems, itemNames) || !(OffhandConfig.btgearItems)){
             return;//No point in going further if all items are disabled
         }
         Arrays.sort(disabledItems);
         customTab=new CreativeTabMB_B_2("Battlegear2");
 
         if(Arrays.binarySearch(disabledItems, itemNames[0]) < 0){
-            heradricItem = new HeraldryCrest().setCreativeTab(customTab).setUnlocalizedName(MODID+itemNames[0]).setTextureName(MODID+"bg-icon");
+        	heradricItem = new HeraldryCrest().setCreativeTab(customTab).setUnlocalizedName(MODID+itemNames[0]).setTextureName(MODID+"bg-icon");
         }
 
         if(Arrays.binarySearch(disabledItems, itemNames[10]) < 0){
-            banner = (BlockFlagPole)new BlockFlagPole().setCreativeTab(customTab).setBlockName(MODID+itemNames[10]);
+        	banner = (BlockFlagPole)new BlockFlagPole().setCreativeTab(customTab).setBlockName(MODID+itemNames[10]);
             GameRegistry.registerBlock(banner, ItemBlockFlagPole.class, itemNames[10]);
             GameRegistry.registerTileEntity(TileEntityFlagPole.class, MODID+itemNames[10]);
         }

@@ -1,5 +1,10 @@
 package mods.battlegear2.client;
 
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+
 import cpw.mods.fml.client.FMLClientHandler;
 import cpw.mods.fml.client.registry.ClientRegistry;
 import cpw.mods.fml.common.FMLCommonHandler;
@@ -12,8 +17,13 @@ import mods.battlegear2.api.core.BattlegearUtils;
 import mods.battlegear2.api.core.InventoryPlayerBattle;
 import mods.battlegear2.api.heraldry.IHeraldryItem;
 import mods.battlegear2.api.shield.IShield;
-import mods.battlegear2.client.gui.BattlegearGuiKeyHandler;
-import mods.battlegear2.client.renderer.*;
+import mods.battlegear2.client.renderer.FlagPoleItemRenderer;
+import mods.battlegear2.client.renderer.FlagPoleTileRenderer;
+import mods.battlegear2.client.renderer.HeraldryCrestItemRenderer;
+import mods.battlegear2.client.renderer.HeraldryItemRenderer;
+import mods.battlegear2.client.renderer.QuiverItremRenderer;
+import mods.battlegear2.client.renderer.ShieldRenderer;
+import mods.battlegear2.client.renderer.SpearRenderer;
 import mods.battlegear2.client.utils.BattlegearClientUtils;
 import mods.battlegear2.heraldry.TileEntityFlagPole;
 import mods.battlegear2.packet.BattlegearAnimationPacket;
@@ -26,7 +36,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.AxisAlignedBB;
@@ -35,11 +44,6 @@ import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.Vec3;
 import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.common.MinecraftForge;
-
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
 
 public final class ClientProxy extends CommonProxy {
 
@@ -53,9 +57,6 @@ public final class ClientProxy extends CommonProxy {
 
     @Override
     public void registerKeyHandelers() {
-        if(BattlegearConfig.enableGUIKeys){
-            FMLCommonHandler.instance().bus().register(BattlegearGuiKeyHandler.INSTANCE);
-        }
     }
 
     @Override
@@ -218,24 +219,6 @@ public final class ClientProxy extends CommonProxy {
         }
         return null;
     }
-    
-    @Override
-    public void tryUseTConstruct() {
-    	try {
-            Class tabRegistry = Class.forName("tconstruct.client.tabs.TabRegistry");
-            Class abstractTab = Class.forName("tconstruct.client.tabs.AbstractTab");
-            Method registerTab = tabRegistry.getMethod("registerTab", abstractTab);
-            updateTab = tabRegistry.getMethod("updateTabValues", int.class, int.class, Class.class);
-            addTabs = tabRegistry.getMethod("addTabsToList", List.class);
-            registerTab.invoke(null, Class.forName("mods.battlegear2.client.gui.controls.EquipGearTab").newInstance());
-            if(Battlegear.debug){
-                registerTab.invoke(null, Class.forName("mods.battlegear2.client.gui.controls.SigilTab").newInstance());
-            }
-		} catch (Exception e) {
-			return;
-		}
-    	tconstructEnabled = true;
-	}
 
     @Override
     public void tryUseDynamicLight(EntityPlayer player, ItemStack stack){

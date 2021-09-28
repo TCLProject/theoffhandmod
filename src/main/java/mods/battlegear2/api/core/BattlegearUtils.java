@@ -202,6 +202,7 @@ public class BattlegearUtils {
      */
     public static boolean usagePriorAttack(ItemStack itemStack){
     	boolean result = false;
+    	if(itemStack == null) return false;
         if(itemStack.getItem() instanceof IUsableItem)
             return ((IUsableItem) itemStack.getItem()).isUsedOverAttack(itemStack);
         else if(itemStack.getItemUseAction()==EnumAction.drink || itemStack.getItemUseAction()==EnumAction.eat)
