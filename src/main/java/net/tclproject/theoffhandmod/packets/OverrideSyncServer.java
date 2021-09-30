@@ -21,7 +21,7 @@ public class OverrideSyncServer implements IMessage {
 		public OverrideSyncServer(EntityPlayer player) {
 			data = new NBTTagCompound();
 			data.setBoolean("override", MysteriumPatchesFixesO.shouldNotOverride);
-			data.setBoolean("rightconfirm", BattlegearUtils.rightclickconfirmed);
+			data.setBoolean("rightconfirm", BattlegearUtils.reverseactionconfirmed);
 		}
 
 		@Override
@@ -39,7 +39,7 @@ public class OverrideSyncServer implements IMessage {
 			 @Override
 		     public IMessage onMessage(OverrideSyncServer message, MessageContext ctx) {
 					MysteriumPatchesFixesO.shouldNotOverride = message.data.getBoolean("override");
-					BattlegearUtils.rightclickconfirmed = message.data.getBoolean("rightconfirm");
+					BattlegearUtils.reverseactionconfirmed = message.data.getBoolean("rightconfirm");
 					return null;
 			 }
 		 }

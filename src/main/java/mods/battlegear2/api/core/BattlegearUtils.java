@@ -84,7 +84,9 @@ public class BattlegearUtils {
      * The generic attack damage key for {@link ItemStack#getAttributeModifiers()}
      */
     private static String genericAttack = SharedMonsterAttributes.attackDamage.getAttributeUnlocalizedName();
-	public static boolean rightclickconfirmed = false;
+    
+    /**If the reverse action keybind is pressed*/
+	public static boolean reverseactionconfirmed = false;
 
     /**
      * Helper method to check if player can use {@link IShield}
@@ -204,11 +206,20 @@ public class BattlegearUtils {
     	boolean result = false;
     	if(itemStack == null) return false;
         if(itemStack.getItem() instanceof IUsableItem)
-            return ((IUsableItem) itemStack.getItem()).isUsedOverAttack(itemStack);
+        	if (reverseactionconfirmed) {
+        		return !(((IUsableItem) itemStack.getItem()).isUsedOverAttack(itemStack));
+        	} else {
+        		return ((IUsableItem) itemStack.getItem()).isUsedOverAttack(itemStack);
+        	}
         else if(itemStack.getItemUseAction()==EnumAction.drink || itemStack.getItemUseAction()==EnumAction.eat)
-            return true;
+        	if (reverseactionconfirmed) {
+        		return false;
+        	}
+        	else {
+        		return true;
+        	}
         result = !(itemStack.getItem() instanceof ItemSword) && (checkForRightClickFunction(itemStack) || isCommonlyUsable(itemStack.getItem()));
-        if (rightclickconfirmed) return !(!(itemStack.getItem() instanceof ItemSword) && (checkForRightClickFunction(itemStack) || isCommonlyUsable(itemStack.getItem())));
+        if (reverseactionconfirmed) return !(!(itemStack.getItem() instanceof ItemSword) && (checkForRightClickFunction(itemStack) || isCommonlyUsable(itemStack.getItem())));
         return result;
     }
 

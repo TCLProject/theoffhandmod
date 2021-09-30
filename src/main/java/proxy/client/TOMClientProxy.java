@@ -1,5 +1,8 @@
 package proxy.client;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Field;
 import java.util.List;
 
 import org.lwjgl.input.Keyboard;
@@ -9,6 +12,8 @@ import cpw.mods.fml.client.registry.ClientRegistry;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.network.internal.FMLProxyPacket;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import mods.battlegear2.api.core.BattlegearUtils;
 import mods.battlegear2.api.core.InventoryPlayerBattle;
 import mods.battlegear2.api.shield.IShield;
@@ -21,6 +26,7 @@ import mods.battlegear2.utils.EnumBGAnimations;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.entity.EntityClientPlayerMP;
+import net.minecraft.client.gui.GuiIngame;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -34,6 +40,7 @@ import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.MinecraftForge;
+import net.tclproject.mysteriumlib.asm.common.CustomLoadingPlugin;
 import net.tclproject.theoffhandmod.TheOffhandMod;
 import proxy.server.TOMServerProxy;
 
@@ -207,6 +214,30 @@ public class TOMClientProxy extends TOMServerProxy {
 	public Entity getEntityByID(World world, int ID)
 	{
 		return world.getEntityByID(ID);
+	}
+	
+	private static final MethodHandle remainingHighlightTicksGet;
+	
+	@SideOnly(Side.CLIENT)
+	public static int getRemainingHighlightTicks() {
+		int value = 0;
+        try {
+			value = (int) remainingHighlightTicksGet.invokeExact((GuiIngame) Minecraft.getMinecraft().ingameGUI);
+		} catch (Throwable e) {
+			e.printStackTrace();
+		}
+        return value;
+	}
+	
+	static {
+	    Field field;
+		try {
+			field = GuiIngame.class.getDeclaredField(CustomLoadingPlugin.isObfuscated() ? "field_92017_k" : "remainingHighlightTicks");
+		    field.setAccessible(true);
+		    remainingHighlightTicksGet = MethodHandles.publicLookup().unreflectGetter(field);
+		} catch (final Exception e) {
+			throw new RuntimeException("Failed to create remainingHighlightTicks of GuiIngameForge instance in static block.", e);
+		}
 	}
 
 	@Override

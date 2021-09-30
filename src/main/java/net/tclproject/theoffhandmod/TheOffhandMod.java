@@ -43,7 +43,7 @@ public class TheOffhandMod
 	/**This is done for compatibility's sake, please don't try to install both this mod and battlegear at once..*/
     public static final String MODID = "theoffhandmod";
     
-    public static final String VERSION = "1.0a";
+    public static final String VERSION = "1.0.1b";
     public static Random rand = new Random();
     public Logger logger;
     private static int modGuiIndex = 0;
@@ -57,7 +57,6 @@ public class TheOffhandMod
 	public static final int ANY_META = 32767;
 
 	public File modDir;
-	public static final String BBVERSION = "1.0a";
 
     public static boolean battlegearEnabled = true;
     public static boolean debug = false;
@@ -79,7 +78,7 @@ public class TheOffhandMod
     {
     	String configBase = event.getSuggestedConfigurationFile().getAbsolutePath();
 		configBase =   popPathFolder(configBase);
-    	event.getModMetadata().version = BBVERSION;
+    	event.getModMetadata().version = VERSION;
 		modDir = event.getModConfigurationDirectory();
 
 		proxy.registerHandlers();

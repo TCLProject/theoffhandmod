@@ -3,18 +3,15 @@ package net.tclproject.mysteriumlib.asm.fixes;
 import static net.minecraftforge.client.IItemRenderer.ItemRenderType.EQUIPPED_FIRST_PERSON;
 import static net.minecraftforge.client.IItemRenderer.ItemRenderType.FIRST_PERSON_MAP;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Field;
-
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 
-import cpw.mods.fml.common.eventhandler.Event;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
+import mods.battlegear2.BattlemodeHookContainerClass;
 import mods.battlegear2.api.core.BattlegearUtils;
 import mods.battlegear2.api.core.InventoryPlayerBattle;
+import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.entity.EntityClientPlayerMP;
@@ -38,9 +35,9 @@ import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.boss.EntityDragonPart;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.init.Items;
-import net.minecraft.inventory.Slot;
 import net.minecraft.item.EnumAction;
 import net.minecraft.item.Item;
 import net.minecraft.item.Item.ToolMaterial;
@@ -51,17 +48,15 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
 import net.minecraft.item.ItemTool;
 import net.minecraft.network.NetHandlerPlayServer;
-import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
-import net.minecraft.network.play.server.S02PacketChat;
+import net.minecraft.network.play.client.C07PacketPlayerDigging;
+import net.minecraft.network.play.client.C09PacketHeldItemChange;
 import net.minecraft.network.play.server.S23PacketBlockChange;
-import net.minecraft.network.play.server.S2FPacketSetSlot;
 import net.minecraft.potion.Potion;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.management.ItemInWorldManager;
 import net.minecraft.stats.AchievementList;
 import net.minecraft.stats.StatList;
-import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IIcon;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition;
@@ -72,14 +67,13 @@ import net.minecraft.world.storage.MapData;
 import net.minecraftforge.client.IItemRenderer;
 import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.entity.player.ArrowLooseEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.tclproject.mysteriumlib.asm.annotations.EnumReturnSetting;
 import net.tclproject.mysteriumlib.asm.annotations.Fix;
 import net.tclproject.mysteriumlib.asm.annotations.ReturnedValue;
 import net.tclproject.theoffhandmod.misc.OffhandEventHandler;
+import proxy.client.TOMClientProxy;
 
 public class MysteriumPatchesFixesO {
 
@@ -212,6 +206,47 @@ public class MysteriumPatchesFixesO {
 		RenderHelper.enableStandardItemLighting();
 	}
 	
+	/**Dirty hack to prevent random resetting of block removal (why does this even happen?!) when breaking blocks with the offhand.*/
+	public static int countToCancel = 0;
+	/**If we have hotswapped the breaking item with the one in offhand and should hotswap it back when called next*/
+	public static boolean hotSwapped = false;
+	
+	@SideOnly(Side.CLIENT)
+	@Fix(returnSetting=EnumReturnSetting.ON_TRUE)
+	public static boolean resetBlockRemoving(PlayerControllerMP controller)
+    {
+		if (countToCancel > 0) {
+			countToCancel--;
+			return true;
+		}
+		else {
+			if (MysteriumPatchesFixesO.hotSwapped) {
+				Minecraft.getMinecraft().thePlayer.inventory.currentItem -= InventoryPlayerBattle.WEAPON_SETS;
+	            Minecraft.getMinecraft().playerController.syncCurrentPlayItem();
+	            MysteriumPatchesFixesO.hotSwapped = false;
+			}
+            int value = TOMClientProxy.getRemainingHighlightTicks();
+            if (BattlemodeHookContainerClass.changedHeldItemTooltips && !(value > 0)) {
+            	Minecraft.getMinecraft().gameSettings.heldItemTooltips = true;
+            	BattlemodeHookContainerClass.changedHeldItemTooltips = false;
+            }
+			return false;
+		}
+    }
+	
+	@Fix(returnSetting=EnumReturnSetting.ALWAYS)
+	public static void processHeldItemChange(NetHandlerPlayServer server, C09PacketHeldItemChange p_147355_1_)
+    {
+        if (p_147355_1_.func_149614_c() >= 0 && p_147355_1_.func_149614_c() < (InventoryPlayer.getHotbarSize() + InventoryPlayerBattle.OFFSET))
+        {
+        	server.playerEntity.inventory.currentItem = p_147355_1_.func_149614_c();
+        	server.playerEntity.func_143004_u();
+        }
+        else
+        {
+        	System.out.println(server.playerEntity.getCommandSenderName() + " tried to set an invalid carried item " + p_147355_1_.func_149614_c());
+        }
+    }
 	// Reflection way of getting the serverController inside NetServerPlayHandler. Not needed yet but might be needed in the future.
 //	private static final MethodHandle fieldGet;
 //	
@@ -243,7 +278,8 @@ public class MysteriumPatchesFixesO {
         float f4 = entityplayersp.prevRenderArmYaw + (entityplayersp.renderArmYaw - entityplayersp.prevRenderArmYaw) * p_78440_1_;
         GL11.glRotatef((entityclientplayermp.rotationPitch - f3) * 0.1F, 1.0F, 0.0F, 0.0F);
         GL11.glRotatef((entityclientplayermp.rotationYaw - f4) * 0.1F, 0.0F, 1.0F, 0.0F);
-        ItemStack itemstack = iitm.itemToRender;
+        boolean moreThan = ((InventoryPlayerBattle)entityclientplayermp.inventory).currentItem <= 153;
+        ItemStack itemstack = ((InventoryPlayerBattle)entityclientplayermp.inventory).getStackInSlot(moreThan ? ((InventoryPlayerBattle)entityclientplayermp.inventory).currentItem : ((InventoryPlayerBattle)entityclientplayermp.inventory).currentItem - 4);
 
         if (itemstack != null && itemstack.getItem() instanceof ItemCloth)
         {
@@ -536,6 +572,100 @@ public class MysteriumPatchesFixesO {
 		}
 		return returnValue;
 	}
+	
+	@Fix
+	public static void processPlayerDigging(NetHandlerPlayServer serv, C07PacketPlayerDigging p_147345_1_)
+    {
+		WorldServer worldserver = MinecraftServer.getServer().worldServerForDimension(serv.playerEntity.dimension);
+	    serv.playerEntity.func_143004_u();
+	
+	    if (p_147345_1_.func_149506_g() == 4)
+	    {
+	        serv.playerEntity.dropOneItem(false);
+	    }
+	    else if (p_147345_1_.func_149506_g() == 3)
+	    {
+	        serv.playerEntity.dropOneItem(true);
+	    }
+	    else if (p_147345_1_.func_149506_g() == 5)
+	    {
+	        serv.playerEntity.stopUsingItem();
+	    }
+	    else
+	    {
+	        boolean flag = false;
+	
+	        if (p_147345_1_.func_149506_g() == 0)
+	        {
+	            flag = true;
+	        }
+	
+	        if (p_147345_1_.func_149506_g() == 1)
+	        {
+	            flag = true;
+	        }
+	
+	        if (p_147345_1_.func_149506_g() == 2)
+	        {
+	            flag = true;
+	        }
+	
+	        int i = p_147345_1_.func_149505_c();
+	        int j = p_147345_1_.func_149503_d();
+	        int k = p_147345_1_.func_149502_e();
+	        if (flag)
+	        {
+	            double d0 = serv.playerEntity.posX - ((double)i + 0.5D);
+	            double d1 = serv.playerEntity.posY - ((double)j + 0.5D) + 1.5D;
+	            double d2 = serv.playerEntity.posZ - ((double)k + 0.5D);
+	            double d3 = d0 * d0 + d1 * d1 + d2 * d2;
+	
+	            double dist = serv.playerEntity.theItemInWorldManager.getBlockReachDistance() + 1;
+	            dist *= dist;
+	
+	            if (d3 > dist)
+	            {
+	                return;
+	            }
+	        }
+	        
+	        if (p_147345_1_.func_149506_g() == 2)
+	        {
+	        	customUncheckedTryHarvestBlock(serv.playerEntity.theItemInWorldManager, i, j, k);
+	            serv.playerEntity.theItemInWorldManager.uncheckedTryHarvestBlock(i, j, k);
+	
+	            if (worldserver.getBlock(i, j, k).getMaterial() != Material.air)
+	            {
+	                serv.playerEntity.playerNetServerHandler.sendPacket(new S23PacketBlockChange(i, j, k, worldserver));
+	            }
+	        }
+	        else if (p_147345_1_.func_149506_g() == 1)
+	        {
+	            serv.playerEntity.theItemInWorldManager.cancelDestroyingBlock(i, j, k);
+	
+	            if (worldserver.getBlock(i, j, k).getMaterial() != Material.air)
+	            {
+	                serv.playerEntity.playerNetServerHandler.sendPacket(new S23PacketBlockChange(i, j, k, worldserver));
+	            }
+	        }
+	    }
+    }
+	
+	// This might be a bad idea. (but if I didn't do this I would have to insert ~10 more fixes into forge-hooked methods and it might not even have worked)
+	@Fix
+	public static void uncheckedTryHarvestBlock(ItemInWorldManager m, int p_73082_1_, int p_73082_2_, int p_73082_3_)
+    {
+        m.theWorld.destroyBlockInWorldPartially(m.thisPlayerMP.getEntityId(), p_73082_1_, p_73082_2_, p_73082_3_, -1);
+        m.tryHarvestBlock(p_73082_1_, p_73082_2_, p_73082_3_);
+    }
+	
+	public static void customUncheckedTryHarvestBlock(ItemInWorldManager m, int p_73082_1_, int p_73082_2_, int p_73082_3_)
+    {
+        m.theWorld.destroyBlockInWorldPartially(m.thisPlayerMP.getEntityId(), p_73082_1_, p_73082_2_, p_73082_3_, -1);
+        m.tryHarvestBlock(p_73082_1_, p_73082_2_, p_73082_3_);
+    }
+
+	
 
 	@Fix(returnSetting = EnumReturnSetting.ALWAYS)
 	public static void attackTargetEntityWithCurrentItem(EntityPlayer plr, Entity p_71059_1_)

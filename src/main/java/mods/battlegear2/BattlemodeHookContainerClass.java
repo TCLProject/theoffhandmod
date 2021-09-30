@@ -1,7 +1,6 @@
 package mods.battlegear2;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import cpw.mods.fml.common.eventhandler.Event;
@@ -23,7 +22,11 @@ import mods.battlegear2.packet.BattlegearShieldFlashPacket;
 import mods.battlegear2.packet.BattlegearSyncItemPacket;
 import mods.battlegear2.packet.OffhandPlaceBlockPacket;
 import mods.battlegear2.utils.EnumBGAnimations;
+import net.minecraft.block.Block;
+import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.audio.PositionedSoundRecord;
+import net.minecraft.client.multiplayer.PlayerControllerMP;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
@@ -33,8 +36,10 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.play.client.C07PacketPlayerDigging;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Vec3;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.FakePlayer;
@@ -138,6 +143,9 @@ public final class BattlemodeHookContainerClass {
                 if (!MysteriumPatchesFixesO.shouldNotOverride) {
                 	event.setCanceled(true);
         			MovingObjectPosition mop = getRaytraceBlock(event.entityPlayer);
+                    if (event.entityPlayer.worldObj.isRemote) { // if it's a block and we should try break it
+                    	tryBreakBlockOffhand(mop, offhandItem, mainHandItem, event);
+                    }
         			if (mop != null) {
 	        			int 
 	        			i = mop.blockX,
@@ -157,7 +165,7 @@ public final class BattlemodeHookContainerClass {
 	                    	}
 	                    }
         			}
-                	if (event.entityPlayer.worldObj.isRemote && !(BattlegearUtils.rightclickconfirmed && BattlegearUtils.usagePriorAttack(offhandItem))) sendOffSwingEvent(event, mainHandItem, offhandItem);
+                	if (event.entityPlayer.worldObj.isRemote && !(BattlegearUtils.reverseactionconfirmed && BattlegearUtils.usagePriorAttack(offhandItem))) sendOffSwingEvent(event, mainHandItem, offhandItem);
                 }
             }else {//Left click
                 ItemStack mainHandItem = event.entityPlayer.getCurrentEquippedItem();
@@ -177,8 +185,115 @@ public final class BattlemodeHookContainerClass {
             }
         }
     }
+    
+    public static boolean changedHeldItemTooltips = false;
 
-    /**
+    @SideOnly(Side.CLIENT)
+    public static void tryBreakBlockOffhand(MovingObjectPosition objectMouseOver, ItemStack offhandItem, ItemStack mainHandItem, PlayerInteractEvent event) {
+        if (objectMouseOver != null && (!BattlegearUtils.usagePriorAttack(offhandItem) || BattlegearUtils.reverseactionconfirmed))
+        {
+        	Minecraft mcInstance = Minecraft.getMinecraft();
+            int i = objectMouseOver.blockX;
+            int j = objectMouseOver.blockY;
+            int k = objectMouseOver.blockZ;
+            if (mcInstance.thePlayer.capabilities.isCreativeMode) 
+            {
+            	mcInstance.getNetHandler().addToSendQueue(new C07PacketPlayerDigging(0, i, j, k, objectMouseOver.sideHit));
+            	PlayerControllerMP.clickBlockCreative(mcInstance, mcInstance.playerController, i, j, k, objectMouseOver.sideHit);
+            	if (!(event.entityPlayer.worldObj.isRemote && !(BattlegearUtils.reverseactionconfirmed && BattlegearUtils.usagePriorAttack(offhandItem)))) {
+                	sendOffSwingEvent(event, mainHandItem, offhandItem); // force offhand swing anyway because we broke a block
+                }
+            	return;
+            }
+            if (mcInstance.theWorld.getBlock(i, j, k).getMaterial() != Material.air)
+            {
+            	if (mcInstance.playerController.blockHitDelay > 0)
+                {
+                    --mcInstance.playerController.blockHitDelay;
+                }
+                else
+                {
+                	mcInstance.playerController.isHittingBlock = true;
+                    mcInstance.playerController.currentBlockX = i;
+                    mcInstance.playerController.currentBlockY = j;
+                    mcInstance.playerController.currentblockZ = k;
+
+                	if ((!ItemStack.areItemStacksEqual(((InventoryPlayerBattle)mcInstance.thePlayer.inventory).getCurrentOffhandWeapon(), mcInstance.thePlayer.inventory.getStackInSlot(mcInstance.thePlayer.inventory.currentItem))) && (((InventoryPlayerBattle)mcInstance.thePlayer.inventory).getCurrentOffhandWeapon() != null)) 
+                	{
+                		if (mcInstance.gameSettings.heldItemTooltips) {
+                			mcInstance.gameSettings.heldItemTooltips = false;
+                			changedHeldItemTooltips = true;   			
+                		}
+                		
+                        mcInstance.thePlayer.inventory.currentItem += InventoryPlayerBattle.WEAPON_SETS;
+                		mcInstance.playerController.currentItemHittingBlock = ((InventoryPlayerBattle)mcInstance.thePlayer.inventory).getCurrentOffhandWeapon();
+                        mcInstance.playerController.syncCurrentPlayItem();
+                        MysteriumPatchesFixesO.hotSwapped = true;
+                	}
+
+                    
+                    Block block = mcInstance.theWorld.getBlock(i, j, k);
+                    if (block.getMaterial() == Material.air)
+                    {
+                        mcInstance.playerController.isHittingBlock = false;
+                        return;
+                    }
+                    MysteriumPatchesFixesO.countToCancel = 5;
+                    mcInstance.playerController.curBlockDamageMP += block.getPlayerRelativeBlockHardness(mcInstance.thePlayer, mcInstance.thePlayer.worldObj, i, j, k);
+
+                    if (mcInstance.playerController.stepSoundTickCounter % 4.0F == 0.0F)
+                    {
+                    	mcInstance.getSoundHandler().playSound(new PositionedSoundRecord(new ResourceLocation(block.stepSound.getStepResourcePath()), (block.stepSound.getVolume() + 1.0F) / 8.0F, block.stepSound.getPitch() * 0.5F, (float)i + 0.5F, (float)j + 0.5F, (float)k + 0.5F));
+                    }
+
+                    ++mcInstance.playerController.stepSoundTickCounter;
+
+                    if (mcInstance.playerController.curBlockDamageMP >= 1.0F)
+                    {
+                        
+                        ItemStack itemstack = mcInstance.thePlayer.getCurrentEquippedItem();
+
+                        if (itemstack != null)
+                        {
+                        	itemstack.func_150999_a(mcInstance.theWorld, block, i, j, k, mcInstance.thePlayer);
+
+                            if (itemstack.stackSize == 0)
+                            {
+                            	mcInstance.thePlayer.destroyCurrentEquippedItem();
+                            }
+                        }
+                        mcInstance.playerController.isHittingBlock = false;
+                        mcInstance.getNetHandler().addToSendQueue(new C07PacketPlayerDigging(2, i, j, k, objectMouseOver.sideHit));
+                        mcInstance.playerController.onPlayerDestroyBlock(i, j, k, objectMouseOver.sideHit);
+                        mcInstance.playerController.curBlockDamageMP = 0.0F;
+                        mcInstance.playerController.stepSoundTickCounter = 0.0F;
+                        mcInstance.playerController.blockHitDelay = 5;
+                        
+            			if (MysteriumPatchesFixesO.hotSwapped) {
+            				mcInstance.thePlayer.inventory.currentItem -= InventoryPlayerBattle.WEAPON_SETS;
+            	            mcInstance.playerController.syncCurrentPlayItem();
+            	            MysteriumPatchesFixesO.hotSwapped = false;
+            			}
+                    }
+                    mcInstance.theWorld.destroyBlockInWorldPartially(mcInstance.thePlayer.getEntityId(), mcInstance.playerController.currentBlockX, mcInstance.playerController.currentBlockY, mcInstance.playerController.currentblockZ, (int)(mcInstance.playerController.curBlockDamageMP * 10.0F) - 1);
+                }
+
+                if (mcInstance.thePlayer.isCurrentToolAdventureModeExempt(i, j, k))
+                {
+                	mcInstance.effectRenderer.addBlockHitEffects(i, j, k, objectMouseOver);
+                }
+                if (!(event.entityPlayer.worldObj.isRemote && !(BattlegearUtils.reverseactionconfirmed && BattlegearUtils.usagePriorAttack(offhandItem)))) {
+                	sendOffSwingEvent(event, mainHandItem, offhandItem); // force offhand swing anyway because we broke a block
+                }
+            }
+        }
+        else
+        {
+        	Minecraft.getMinecraft().playerController.resetBlockRemoving();
+        }
+	}
+
+	/**
      * Attempts to right-click-use an item by the given EntityPlayer
      */
     public static boolean tryUseItem(EntityPlayer entityPlayer, ItemStack itemStack, Side side)
@@ -236,7 +351,7 @@ public final class BattlemodeHookContainerClass {
     @SubscribeEvent(priority=EventPriority.HIGHEST)
     public void onOffhandSwing(PlayerEventChild.OffhandSwingEvent event){
         if(event.offHand != null && event.parent.getClass().equals(PlayerInteractEvent.class)){
-            if (event.offHand.getItem() instanceof IShield || (!BattlegearUtils.rightclickconfirmed && BattlegearUtils.usagePriorAttack(event.offHand))){
+            if (event.offHand.getItem() instanceof IShield || (!BattlegearUtils.reverseactionconfirmed && BattlegearUtils.usagePriorAttack(event.offHand))){
                 event.setCanceled(true);
             }else if(event.offHand.getItem() instanceof IOffhandDual){
                 boolean shouldSwing = true;

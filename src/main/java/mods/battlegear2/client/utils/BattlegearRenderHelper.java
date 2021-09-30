@@ -141,8 +141,9 @@ public final class BattlegearRenderHelper {
         }
 
         IOffhandRender offhandRender = (IOffhandRender)itemRenderer;
-
-        if (offhandRender.getItemToRender() != dummyStack) {
+        ItemStack itemToRender = offhandRender.getItemToRender();
+        
+        if (itemToRender != dummyStack) {
             float progress = offhandRender.getPrevEquippedProgress() + (offhandRender.getEquippedProgress() - offhandRender.getPrevEquippedProgress()) * frame;
 
             EntityClientPlayerMP player = mc.thePlayer;
@@ -169,8 +170,8 @@ public final class BattlegearRenderHelper {
             float var21;
             float var20;
 
-            if (offhandRender.getItemToRender() != null) {
-                applyColorFromItemStack(offhandRender.getItemToRender(), 0);
+            if (itemToRender != null) {
+                applyColorFromItemStack(itemToRender, 0);
             } else {
                 GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
             }
@@ -182,15 +183,15 @@ public final class BattlegearRenderHelper {
             RenderPlayerEvent preRender = new RenderPlayerEvent.Pre(player, var26, frame);
             RenderPlayerEvent postRender = new RenderPlayerEvent.Post(player, var26, frame);
             var7 = 0.8F;
-            if (offhandRender.getItemToRender() != null) {
+            if (itemToRender != null) {
 
-	        	if(offhandRender.getItemToRender().getItem() instanceof IShield){
+	        	if(itemToRender.getItem() instanceof IShield){
                     GL11.glPushMatrix();
 
                     float swingProgress =
                             (float)((IBattlePlayer)player).getSpecialActionTimer() / (
-                                    float)((IShield)offhandRender.getItemToRender().getItem()).getBashTimer(
-                                    offhandRender.getItemToRender());
+                                    float)((IShield)itemToRender.getItem()).getBashTimer(
+                                    itemToRender);
 
 	        		GL11.glTranslatef(-0.7F * var7 + 0.25F*MathHelper.sin(swingProgress*(float)Math.PI),
 	        				-0.65F * var7 - (1.0F - progress) * 0.6F - 0.4F,
@@ -203,16 +204,16 @@ public final class BattlegearRenderHelper {
 	        		GL11.glRotatef(25, 0, 0, 1);
 	        		GL11.glRotatef(325-35*MathHelper.sin(swingProgress*(float)Math.PI), 0, 1, 0);
 
-	        		if(!BattlegearUtils.RENDER_BUS.post(new PreRenderPlayerElement(preRender, true, PlayerElementType.ItemOffhand, offhandRender.getItemToRender())))
-	        			itemRenderer.renderItem(player, offhandRender.getItemToRender(), 0);
-                    BattlegearUtils.RENDER_BUS.post(new PostRenderPlayerElement(postRender, true, PlayerElementType.ItemOffhand, offhandRender.getItemToRender()));
+	        		if(!BattlegearUtils.RENDER_BUS.post(new PreRenderPlayerElement(preRender, true, PlayerElementType.ItemOffhand, itemToRender)))
+	        			itemRenderer.renderItem(player, itemToRender, 0);
+                    BattlegearUtils.RENDER_BUS.post(new PostRenderPlayerElement(postRender, true, PlayerElementType.ItemOffhand, itemToRender));
 	        		GL11.glPopMatrix();
 
 	        	}else{
                     GL11.glPushMatrix();
 
                     if (player.getItemInUseCount() > 0) {
-                        EnumAction action = offhandRender.getItemToRender().getItemUseAction();
+                        EnumAction action = itemToRender.getItemUseAction();
                         
                         if (MysteriumPatchesFixesO.leftclicked) {
                         	action = EnumAction.none;
@@ -220,7 +221,7 @@ public final class BattlegearRenderHelper {
 
                         if (action == EnumAction.eat || action == EnumAction.drink) {
                             var21 = (float) player.getItemInUseCount() - frame + 1.0F;
-                            var10 = 1.0F - var21 / (float) offhandRender.getItemToRender().getMaxItemUseDuration();
+                            var10 = 1.0F - var21 / (float) itemToRender.getMaxItemUseDuration();
                             var11 = 1.0F - var10;
                             var11 = var11 * var11 * var11;
                             var11 = var11 * var11 * var11;
@@ -266,7 +267,7 @@ public final class BattlegearRenderHelper {
                     float var15;
 
                     if (player.getItemInUseCount() > 0) {
-                        EnumAction action = offhandRender.getItemToRender().getItemUseAction();
+                        EnumAction action = itemToRender.getItemUseAction();
                         
                         if (MysteriumPatchesFixesO.leftclicked) {
                         	action = EnumAction.none;
@@ -282,7 +283,7 @@ public final class BattlegearRenderHelper {
                             GL11.glRotatef(-12.0F, 0.0F, 1.0F, 0.0F);
                             GL11.glRotatef(-8.0F, 1.0F, 0.0F, 0.0F);
                             GL11.glTranslatef(-0.9F, 0.2F, 0.0F);
-                            var13 = (float) offhandRender.getItemToRender().getMaxItemUseDuration() - ((float) player.getItemInUseCount() - frame + 1.0F);
+                            var13 = (float) itemToRender.getMaxItemUseDuration() - ((float) player.getItemInUseCount() - frame + 1.0F);
                             var14 = var13 / 20.0F;
                             var14 = (var14 * var14 + var14 * 2.0F) / 3.0F;
 
@@ -306,20 +307,28 @@ public final class BattlegearRenderHelper {
                         }
                     }
 
-                    if (offhandRender.getItemToRender().getItem().shouldRotateAroundWhenRendering()) {
+                    if (itemToRender.getItem().shouldRotateAroundWhenRendering()) {
                         GL11.glRotatef(180.0F, 0.0F, 1.0F, 0.0F);
                     }
-                    if(!BattlegearUtils.RENDER_BUS.post(new PreRenderPlayerElement(preRender, true, PlayerElementType.ItemOffhand, offhandRender.getItemToRender()))){
-
-                        itemRenderer.renderItem(player, offhandRender.getItemToRender(), 0);
-                    	if (offhandRender.getItemToRender().getItem().requiresMultipleRenderPasses()) {
-	                        for (int x = 1; x < offhandRender.getItemToRender().getItem().getRenderPasses(offhandRender.getItemToRender().getItemDamage()); x++) {
-	                            applyColorFromItemStack(offhandRender.getItemToRender(), x);
-	                            itemRenderer.renderItem(player, offhandRender.getItemToRender(), x);
+                    if(!BattlegearUtils.RENDER_BUS.post(new PreRenderPlayerElement(preRender, true, PlayerElementType.ItemOffhand, itemToRender))){
+                    	
+                    	if (!Minecraft.getMinecraft().gameSettings.keyBindAttack.getIsKeyPressed() && Minecraft.getMinecraft().gameSettings.keyBindUseItem.getIsKeyPressed() && ItemStack.areItemStacksEqual(((InventoryPlayerBattle)player.inventory).getCurrentOffhandWeapon(), Minecraft.getMinecraft().playerController.currentItemHittingBlock)) {
+	                    	GL11.glTranslatef(-0.8F, 0.6F, -0.5F);
+	                    	GL11.glScalef(1.4F, 1.6F, 1.4F);
+	                    	if (ItemStack.areItemStacksEqual(((InventoryPlayerBattle)player.inventory).getCurrentOffhandWeapon(), ((InventoryPlayerBattle)player.inventory).getStackInSlot(((InventoryPlayerBattle)player.inventory).currentItem))) {
+	                    		GL11.glTranslatef(0.6F, -0.4F, 0.3F);
+	                    		GL11.glScalef(0.9F, 0.85F, 0.9F);
+	                    	}
+                    	}
+                        itemRenderer.renderItem(player, itemToRender, 0);
+                    	if (itemToRender.getItem().requiresMultipleRenderPasses()) {
+	                        for (int x = 1; x < itemToRender.getItem().getRenderPasses(itemToRender.getItemDamage()); x++) {
+	                            applyColorFromItemStack(itemToRender, x);
+	                            itemRenderer.renderItem(player, itemToRender, x);
 	                        }
 	                    }
                     }
-                    BattlegearUtils.RENDER_BUS.post(new PostRenderPlayerElement(postRender, true, PlayerElementType.ItemOffhand, offhandRender.getItemToRender()));
+                    BattlegearUtils.RENDER_BUS.post(new PostRenderPlayerElement(postRender, true, PlayerElementType.ItemOffhand, itemToRender));
 	        		
                     GL11.glPopMatrix();
                 }
@@ -369,8 +378,9 @@ public final class BattlegearRenderHelper {
         offhandRender.setPrevEquippedProgress(offhandRender.getEquippedProgress());
         int slot = mc.thePlayer.inventory.currentItem + InventoryPlayerBattle.WEAPON_SETS;
         EntityPlayer var1 = mc.thePlayer;
+        boolean moreThan = offhandRender.getEquippedItemSlot() > 157;
         ItemStack var2 = ((IBattlePlayer)var1).isBattlemode() && offhandRender.getEquippedItemSlot() > 0 ?
-                var1.inventory.getStackInSlot(offhandRender.getEquippedItemSlot()) : dummyStack;
+                var1.inventory.getStackInSlot(moreThan ? offhandRender.getEquippedItemSlot() - 4 : offhandRender.getEquippedItemSlot()) : dummyStack;
 
         boolean var3 = offhandRender.getEquippedItemSlot() == slot && var2 == offhandRender.getItemToRender();
 
@@ -391,7 +401,7 @@ public final class BattlegearRenderHelper {
         }
 
         float increment = (var3 ? 1.0F : 0.0F) - offhandRender.getEquippedProgress();
-
+        
         if (increment < -PROGRESS_INCREMENT_LIMIT) {
             increment = -PROGRESS_INCREMENT_LIMIT;
         }
@@ -450,7 +460,8 @@ public final class BattlegearRenderHelper {
 
     public static void renderItemIn3rdPerson(EntityPlayer par1EntityPlayer, ModelBiped modelBipedMain, float frame) {
 
-        ItemStack var21 = ((InventoryPlayerBattle) par1EntityPlayer.inventory).getCurrentOffhandWeapon();
+    	boolean moreThan = ((InventoryPlayerBattle) par1EntityPlayer.inventory).currentItem + InventoryPlayerBattle.WEAPON_SETS > 157;
+        ItemStack var21 = moreThan ? ((InventoryPlayerBattle) par1EntityPlayer.inventory).getStackInSlot(((InventoryPlayerBattle) par1EntityPlayer.inventory).currentItem - 4 + InventoryPlayerBattle.WEAPON_SETS) : ((InventoryPlayerBattle) par1EntityPlayer.inventory).getStackInSlot(((InventoryPlayerBattle) par1EntityPlayer.inventory).currentItem + InventoryPlayerBattle.WEAPON_SETS);
 
         if (var21 != null) {
 
@@ -482,7 +493,7 @@ public final class BattlegearRenderHelper {
 
             IItemRenderer customRenderer = MinecraftForgeClient.getItemRenderer(var21, EQUIPPED);
             boolean is3D = (customRenderer != null && customRenderer.shouldUseRenderHelper(EQUIPPED, var21, BLOCK_3D));
-
+            
             if(var21.getItem() instanceof IShield){
                 var7 = 0.625F;
                 GL11.glScalef(var7, -var7, var7);
