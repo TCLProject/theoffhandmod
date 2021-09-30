@@ -8,10 +8,12 @@ The Offhand Mod is a modification of the [Mine&Blade Battlegear 2](https://githu
   * Left click always triggers the main hand action, right click always triggers the offhand action. The action is swinging for a weapon, shooting for a bow, eating for food, placing for block, etc.
   * Pressing left/right click and the Alt key (configurable) allows you to reverse an action and swing a bow, block a sword, etc.
   * The above two changes mean that you can use any item you want, in any hand.
+- Added ability to mine blocks with the offhand.
+- Added ability to use items/place blocks when the other hand is occupied with a usable item.
 - Removed any and all limitations to what you can put in the offhand and in the mainhand that were present in battlegear2.
 - Instead of two pairs of three slots, there are two pairs of four slots available.
 - Changed rendering of the hotbar: instead of adding to it, the mod now replaces it.
-- Instead of the added slots being completely separated, they are now interchangeable with the vanilla hotbar.
+- Instead of the added slots being completely separated, they are now interchangeable with the vanilla hotbar. As a consequence, removed the GUI that was previously required to place items in the offhand.
 - Removed feature that turns off dual wielding (as turning it off would provide no actual gameplay benefit anymore: see above).
 
 To get a feel of if you like these modifications or not, I would recommend trying them out in-game. I am also open to suggestions.
@@ -27,7 +29,6 @@ You can set up a devevelopment environment by Gradle, with IntelliJIdea: `gradle
 
 ## TODO
 
-- Add ability to mine blocks with the offhand
 - Separate the two hands' active slots to make them indepentent of each other
 
 ## Contributing
