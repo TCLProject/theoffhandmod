@@ -573,8 +573,8 @@ public class MysteriumPatchesFixesO {
 		return returnValue;
 	}
 	
-	@Fix
-	public static void processPlayerDigging(NetHandlerPlayServer serv, C07PacketPlayerDigging p_147345_1_)
+	@Fix(returnSetting=EnumReturnSetting.ON_TRUE)
+	public static boolean processPlayerDigging(NetHandlerPlayServer serv, C07PacketPlayerDigging p_147345_1_)
     {
 		WorldServer worldserver = MinecraftServer.getServer().worldServerForDimension(serv.playerEntity.dimension);
 	    serv.playerEntity.func_143004_u();
@@ -582,14 +582,17 @@ public class MysteriumPatchesFixesO {
 	    if (p_147345_1_.func_149506_g() == 4)
 	    {
 	        serv.playerEntity.dropOneItem(false);
+	        return true;
 	    }
 	    else if (p_147345_1_.func_149506_g() == 3)
 	    {
 	        serv.playerEntity.dropOneItem(true);
+	        return true;
 	    }
 	    else if (p_147345_1_.func_149506_g() == 5)
 	    {
 	        serv.playerEntity.stopUsingItem();
+	        return true;
 	    }
 	    else
 	    {
@@ -625,7 +628,7 @@ public class MysteriumPatchesFixesO {
 	
 	            if (d3 > dist)
 	            {
-	                return;
+	                return true;
 	            }
 	        }
 	        
@@ -638,6 +641,7 @@ public class MysteriumPatchesFixesO {
 	            {
 	                serv.playerEntity.playerNetServerHandler.sendPacket(new S23PacketBlockChange(i, j, k, worldserver));
 	            }
+	            return true;
 	        }
 	        else if (p_147345_1_.func_149506_g() == 1)
 	        {
@@ -647,8 +651,10 @@ public class MysteriumPatchesFixesO {
 	            {
 	                serv.playerEntity.playerNetServerHandler.sendPacket(new S23PacketBlockChange(i, j, k, worldserver));
 	            }
+	            return true;
 	        }
 	    }
+	    return false;
     }
 	
 	// This might be a bad idea. (but if I didn't do this I would have to insert ~10 more fixes into forge-hooked methods and it might not even have worked)
