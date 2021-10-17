@@ -259,4 +259,21 @@ public class TOMClientProxy extends TOMServerProxy {
 	{
 		return ent instanceof AbstractClientPlayer;
 	}
+	
+	// Helper method for if right click is pressed to be able to be called in client code in both client and server classes (otherwise server compile will fail)
+	// Similar to two the methods below for their respective uses
+	@Override
+	public boolean isRightClickHeld() {
+		return Minecraft.getMinecraft().gameSettings.keyBindUseItem.getIsKeyPressed();
+	}
+	
+	@Override
+	public int getLeftClickCounter() {
+		return Minecraft.getMinecraft().leftClickCounter;
+	}
+
+	@Override
+	public void setLeftClickCounter(int i) {
+		Minecraft.getMinecraft().leftClickCounter = i;
+	}
 }

@@ -30,6 +30,7 @@ import net.minecraft.item.EnumAction;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
+import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.MouseEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
@@ -52,7 +53,7 @@ public class OffhandEventHandler {
     * for each quest, e.g. with 2 quests at the start of the game it'll be "000000001001", which can be broken down into "000000", "001" and "001"*/
    public static String globalState;
    private static boolean lastPressed = false;
-   private static int ticks = 0;
+   public static int ticks = 0;
 
    public OffhandEventHandler() {
    }
@@ -61,6 +62,7 @@ public class OffhandEventHandler {
 	@SubscribeEvent(priority=EventPriority.NORMAL, receiveCanceled=true)
 	public void onKeyInputEvent(KeyInputEvent event)
 	{
+    	
 		if (TOMClientProxy.keyBindReverseAction.isPressed()) {
 			if (!lastPressed) {
 				BattlegearUtils.reverseactionconfirmed = true;
@@ -75,6 +77,8 @@ public class OffhandEventHandler {
 	}
     
     public static boolean cancelone = false;
+
+	public static int delay;
     
 	@SideOnly(Side.CLIENT)
 	@SubscribeEvent(
@@ -120,6 +124,10 @@ public class OffhandEventHandler {
 		   firstTick = false;
 	   }
 	   
+	   if (delay > 0) {
+		   delay--;
+	   }
+	   
 	   ticks++;
 	   if(ticks >= 30) {
 		   ticks = 0;
@@ -128,6 +136,18 @@ public class OffhandEventHandler {
 			   i.closeInventory();
 			   BattlemodeHookContainerClass.tobeclosed.remove(i);
 		   }
+	   }
+	   
+	   if (!MysteriumPatchesFixesO.shouldNotOverride && event.player.worldObj.isRemote && TheOffhandMod.proxy.getLeftClickCounter() <= 0) {
+	       if (TheOffhandMod.proxy.isRightClickHeld()) { // if it's a block and we should try break it
+			   ItemStack mainHandItem = event.player.getCurrentEquippedItem();
+		       ItemStack offhandItem = ((InventoryPlayerBattle) event.player.inventory).getCurrentOffhandWeapon();
+			   MovingObjectPosition mop = BattlemodeHookContainerClass.getRaytraceBlock(event.player);
+	           BattlemodeHookContainerClass.tryBreakBlockOffhand(mop, offhandItem, mainHandItem, event);
+	           TheOffhandMod.proxy.setLeftClickCounter(10);
+	       } else {
+	    	   Minecraft.getMinecraft().playerController.resetBlockRemoving();
+	       }
 	   }
 
 	   for (int i = 0; i < 4; ++i)
@@ -157,6 +177,7 @@ public class OffhandEventHandler {
    }
 
    private void onFirstTick(EntityPlayer p) {
+	   
    }
 
 	@SubscribeEvent
@@ -173,8 +194,9 @@ public class OffhandEventHandler {
 	public void renderThirdPersonItemCustom(RenderPlayerEvent.Specials.Pre event) {
 		event.renderItem = false;
 		
-		boolean moreThan = ((InventoryPlayerBattle)event.entityPlayer.inventory).currentItem <= 153;
-        ItemStack itemstack1 = ((InventoryPlayerBattle)event.entityPlayer.inventory).getStackInSlot(moreThan ? ((InventoryPlayerBattle)event.entityPlayer.inventory).currentItem : ((InventoryPlayerBattle)event.entityPlayer.inventory).currentItem - 4);
+		boolean lessThan = ((InventoryPlayerBattle)event.entityPlayer.inventory).currentItem <= 153;
+		
+        ItemStack itemstack1 = ((InventoryPlayerBattle)event.entityPlayer.inventory).getStackInSlot(lessThan ? ((InventoryPlayerBattle)event.entityPlayer.inventory).currentItem : ((InventoryPlayerBattle)event.entityPlayer.inventory).currentItem - BattlemodeHookContainerClass.prevOffhandOffset);
 
         if (itemstack1 != null)
         {
@@ -330,8 +352,8 @@ public class OffhandEventHandler {
         gui.drawTexturedModalRect(width / 2 - 69 + 78, height - 22, 0, 0, 81, 22);
         gui.drawTexturedModalRect(width / 2 - 91 + 181, height - 22, 0, 0, 1, 22);
 
-        gui.drawTexturedModalRect(width / 2 - 91 - 1 + (mc.thePlayer.inventory.currentItem - InventoryPlayerBattle.OFFSET + (MysteriumPatchesFixesO.hotSwapped ? -4 : 0)) * 20, height - 22 - 1, 0, 22, 24, 22);
-        gui.drawTexturedModalRect(width / 2 - 91 - 1 + (mc.thePlayer.inventory.currentItem - InventoryPlayerBattle.OFFSET + 5 + (MysteriumPatchesFixesO.hotSwapped ? -4 : 0)) * 20, height - 22 - 1, 0, 22, 24, 22);
+        gui.drawTexturedModalRect(width / 2 - 91 - 1 + (mc.thePlayer.inventory.currentItem - InventoryPlayerBattle.OFFSET + 5 + (MysteriumPatchesFixesO.hotSwapped ? -BattlemodeHookContainerClass.prevOffhandOffset : 0)) * 20, height - 22 - 1, 0, 22, 24, 22);
+        gui.drawTexturedModalRect(width / 2 - 91 - 1 + (((InventoryPlayerBattle)mc.thePlayer.inventory).currentItemInactive - InventoryPlayerBattle.WEAPON_SETS - InventoryPlayerBattle.OFFSET + (MysteriumPatchesFixesO.hotSwapped ? -((InventoryPlayerBattle)Minecraft.getMinecraft().thePlayer.inventory).getOffsetToInactiveHand() : 0)) * 20, height - 22 - 1, 0, 22, 24, 22);
 
         GL11.glDisable(GL11.GL_BLEND);
         GL11.glEnable(GL12.GL_RESCALE_NORMAL);

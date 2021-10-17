@@ -6,6 +6,7 @@ import java.util.List;
 import cpw.mods.fml.common.eventhandler.Event;
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.TickEvent.PlayerTickEvent;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import mods.battlegear2.api.IHandListener;
@@ -18,6 +19,7 @@ import mods.battlegear2.api.core.InventoryPlayerBattle;
 import mods.battlegear2.api.shield.IArrowCatcher;
 import mods.battlegear2.api.shield.IShield;
 import mods.battlegear2.api.weapons.IExtendedReachWeapon;
+import mods.battlegear2.client.BattlegearClientTickHandeler;
 import mods.battlegear2.packet.BattlegearShieldFlashPacket;
 import mods.battlegear2.packet.BattlegearSyncItemPacket;
 import mods.battlegear2.packet.OffhandPlaceBlockPacket;
@@ -37,6 +39,7 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.client.C07PacketPlayerDigging;
+import net.minecraft.network.play.client.C09PacketHeldItemChange;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.ResourceLocation;
@@ -53,6 +56,7 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.tclproject.mysteriumlib.asm.fixes.MysteriumPatchesFixesO;
 import net.tclproject.theoffhandmod.TheOffhandMod;
+import net.tclproject.theoffhandmod.misc.OffhandEventHandler;
 
 public final class BattlemodeHookContainerClass {
 
@@ -143,9 +147,6 @@ public final class BattlemodeHookContainerClass {
                 if (!MysteriumPatchesFixesO.shouldNotOverride) {
                 	event.setCanceled(true);
         			MovingObjectPosition mop = getRaytraceBlock(event.entityPlayer);
-                    if (event.entityPlayer.worldObj.isRemote) { // if it's a block and we should try break it
-                    	tryBreakBlockOffhand(mop, offhandItem, mainHandItem, event);
-                    }
         			if (mop != null) {
 	        			int 
 	        			i = mop.blockX,
@@ -187,9 +188,11 @@ public final class BattlemodeHookContainerClass {
     }
     
     public static boolean changedHeldItemTooltips = false;
-
+    // used in hostwapping the item to dig with, to remember where to return the main slot to
+    public static int prevOffhandOffset;
+    
     @SideOnly(Side.CLIENT)
-    public static void tryBreakBlockOffhand(MovingObjectPosition objectMouseOver, ItemStack offhandItem, ItemStack mainHandItem, PlayerInteractEvent event) {
+    public static void tryBreakBlockOffhand(MovingObjectPosition objectMouseOver, ItemStack offhandItem, ItemStack mainHandItem, PlayerTickEvent event) {
         if (objectMouseOver != null && (!BattlegearUtils.usagePriorAttack(offhandItem) || BattlegearUtils.reverseactionconfirmed))
         {
         	Minecraft mcInstance = Minecraft.getMinecraft();
@@ -198,11 +201,14 @@ public final class BattlemodeHookContainerClass {
             int k = objectMouseOver.blockZ;
             if (mcInstance.thePlayer.capabilities.isCreativeMode) 
             {
-            	mcInstance.getNetHandler().addToSendQueue(new C07PacketPlayerDigging(0, i, j, k, objectMouseOver.sideHit));
-            	PlayerControllerMP.clickBlockCreative(mcInstance, mcInstance.playerController, i, j, k, objectMouseOver.sideHit);
-            	if (!(event.entityPlayer.worldObj.isRemote && !(BattlegearUtils.reverseactionconfirmed && BattlegearUtils.usagePriorAttack(offhandItem)))) {
-                	sendOffSwingEvent(event, mainHandItem, offhandItem); // force offhand swing anyway because we broke a block
-                }
+            	if (OffhandEventHandler.delay <= 0) {
+	            	mcInstance.getNetHandler().addToSendQueue(new C07PacketPlayerDigging(0, i, j, k, objectMouseOver.sideHit));
+	            	PlayerControllerMP.clickBlockCreative(mcInstance, mcInstance.playerController, i, j, k, objectMouseOver.sideHit);
+	            	if (!(event.player.worldObj.isRemote && !(BattlegearUtils.reverseactionconfirmed && BattlegearUtils.usagePriorAttack(offhandItem)))) {
+	            		sendOffSwingEventNoCheck(mainHandItem, offhandItem); // force offhand swing anyway because we broke a block
+	                }
+	            	OffhandEventHandler.delay = 24;
+            	}
             	return;
             }
             if (mcInstance.theWorld.getBlock(i, j, k).getMaterial() != Material.air)
@@ -225,7 +231,8 @@ public final class BattlemodeHookContainerClass {
                 			changedHeldItemTooltips = true;   			
                 		}
                 		
-                        mcInstance.thePlayer.inventory.currentItem += InventoryPlayerBattle.WEAPON_SETS;
+                		prevOffhandOffset = ((InventoryPlayerBattle)mcInstance.thePlayer.inventory).getOffsetToInactiveHand();
+                        mcInstance.thePlayer.inventory.currentItem += ((InventoryPlayerBattle)mcInstance.thePlayer.inventory).getOffsetToInactiveHand();
                 		mcInstance.playerController.currentItemHittingBlock = ((InventoryPlayerBattle)mcInstance.thePlayer.inventory).getCurrentOffhandWeapon();
                         mcInstance.playerController.syncCurrentPlayItem();
                         MysteriumPatchesFixesO.hotSwapped = true;
@@ -270,7 +277,7 @@ public final class BattlemodeHookContainerClass {
                         mcInstance.playerController.blockHitDelay = 5;
                         
             			if (MysteriumPatchesFixesO.hotSwapped) {
-            				mcInstance.thePlayer.inventory.currentItem -= InventoryPlayerBattle.WEAPON_SETS;
+            				mcInstance.thePlayer.inventory.currentItem -= prevOffhandOffset;
             	            mcInstance.playerController.syncCurrentPlayItem();
             	            MysteriumPatchesFixesO.hotSwapped = false;
             			}
@@ -282,8 +289,8 @@ public final class BattlemodeHookContainerClass {
                 {
                 	mcInstance.effectRenderer.addBlockHitEffects(i, j, k, objectMouseOver);
                 }
-                if (!(event.entityPlayer.worldObj.isRemote && !(BattlegearUtils.reverseactionconfirmed && BattlegearUtils.usagePriorAttack(offhandItem)))) {
-                	sendOffSwingEvent(event, mainHandItem, offhandItem); // force offhand swing anyway because we broke a block
+                if (!(event.player.worldObj.isRemote && !(BattlegearUtils.reverseactionconfirmed && BattlegearUtils.usagePriorAttack(offhandItem)))) {
+                	sendOffSwingEventNoCheck(mainHandItem, offhandItem); // force offhand swing anyway because we broke a block
                 }
             }
         }

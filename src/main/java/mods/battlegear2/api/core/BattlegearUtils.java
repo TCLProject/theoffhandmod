@@ -137,7 +137,7 @@ public class BattlegearUtils {
      */
     public static void setPlayerOffhandItem(EntityPlayer player, ItemStack stack){
         if(isPlayerInBattlemode(player))
-            setPlayerCurrentItem(player, stack, InventoryPlayerBattle.WEAPON_SETS);
+            setPlayerCurrentItem(player, stack, ((InventoryPlayerBattle)player.inventory).getOffsetToInactiveHand());
     }
 
     /**
@@ -386,20 +386,21 @@ public class BattlegearUtils {
      */
     public static void attackTargetEntityWithCurrentOffItem(EntityPlayer player, Entity par1Entity){
         final ItemStack oldItem = player.getCurrentEquippedItem();
-        player.inventory.currentItem += InventoryPlayerBattle.WEAPON_SETS;
+        int currOffset = ((InventoryPlayerBattle)player.inventory).getOffsetToInactiveHand();
+        player.inventory.currentItem += currOffset;
         ItemStack stack = player.getCurrentEquippedItem();
         refreshAttributes(player.getAttributeMap(), oldItem, stack);
         if (MinecraftForge.EVENT_BUS.post(new AttackEntityEvent(player, par1Entity)))
         {
             refreshAttributes(player.getAttributeMap(), player.getCurrentEquippedItem(), oldItem);
-            player.inventory.currentItem -= InventoryPlayerBattle.WEAPON_SETS;
+            player.inventory.currentItem -= currOffset;
             return;
         }
         stack = player.getCurrentEquippedItem();
         if (stack != null && stack.getItem().onLeftClickEntity(stack, player, par1Entity))
         {
             refreshAttributes(player.getAttributeMap(), player.getCurrentEquippedItem(), oldItem);
-            player.inventory.currentItem -= InventoryPlayerBattle.WEAPON_SETS;
+            player.inventory.currentItem -= currOffset;
             return;
         }
         if (par1Entity.canAttackWithItem())
@@ -524,7 +525,7 @@ public class BattlegearUtils {
             }
         }
         refreshAttributes(player.getAttributeMap(), player.getCurrentEquippedItem(), oldItem);
-        player.inventory.currentItem -= InventoryPlayerBattle.WEAPON_SETS;
+        player.inventory.currentItem -= currOffset;
     }
 
     /**

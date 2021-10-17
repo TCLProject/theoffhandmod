@@ -2,7 +2,9 @@ package mods.battlegear2.api.core;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
+import mods.battlegear2.client.BattlegearClientTickHandeler;
 import net.minecraft.block.Block;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.Item;
@@ -10,6 +12,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.common.MinecraftForge;
+import net.tclproject.mysteriumlib.network.OFFMagicNetwork;
+import net.tclproject.theoffhandmod.packets.OverrideSyncServer;
 
 /**
  * User: nerd-boy
@@ -23,11 +27,14 @@ public class InventoryPlayerBattle extends InventoryPlayer {
     public static int ARMOR_OFFSET = 100;
     public static int OFFSET = 150;
     public static int WEAPON_SETS = 4;
+    // The index the inactive hand, be it the main hand or the offhand
+    public int currentItemInactive = 154;
 
     public static int EXTRA_ITEMS = WEAPON_SETS * 2;
     public static int EXTRA_INV_SIZE = EXTRA_ITEMS + 6 + 6;
 
     public ItemStack[] extraItems;
+	private int scroll = currentItemInactive;
 
     public InventoryPlayerBattle(EntityPlayer entityPlayer) {
         super(entityPlayer);
@@ -39,6 +46,11 @@ public class InventoryPlayerBattle extends InventoryPlayer {
      */
     public boolean isBattlemode() {
         return this.currentItem >= OFFSET && this.currentItem < OFFSET + EXTRA_ITEMS;
+    }
+    
+    /** Can be anywhere from 1 (active hand is 153, inactive hand is 154) to 7 (active hand is 150, inactive hand is 157) */
+    public int getOffsetToInactiveHand() {
+    	return this.currentItemInactive-this.currentItem;
     }
 
     /**
@@ -144,15 +156,33 @@ public class InventoryPlayerBattle extends InventoryPlayer {
             }else if (direction != 0){
             	direction = -1;
             }
-
-            //noinspection StatementWithEmptyBody
-            for (currentItem -= direction; currentItem < OFFSET; currentItem += WEAPON_SETS) {
-            }
-
-            while (currentItem >= OFFSET + WEAPON_SETS) {
-                currentItem -= WEAPON_SETS;
-            }
-
+        	
+        	if (scroll >= 150 && scroll <= 153) {
+        		if (currentItem - direction < 150) {
+        			currentItemInactive = OFFSET + WEAPON_SETS*2 - 1;
+        			scroll = currentItemInactive;
+        		} else if (currentItem - direction > 153) {
+        			currentItemInactive = OFFSET + WEAPON_SETS;
+        			scroll = currentItemInactive;
+        		} else {
+        			currentItem -= direction;
+        			BattlegearClientTickHandeler.INSTANCE.previousBattlemode = currentItem;
+        			scroll = currentItem;
+        		}
+        	} else {
+        		if (currentItemInactive - direction < 154) {
+        			currentItem = OFFSET + WEAPON_SETS - 1;
+        			BattlegearClientTickHandeler.INSTANCE.previousBattlemode = currentItem;
+        			scroll = currentItem;
+        		} else if (currentItemInactive - direction > 157) {
+        			currentItem = OFFSET;
+        			BattlegearClientTickHandeler.INSTANCE.previousBattlemode = currentItem;
+        			scroll = currentItem;
+        		} else {
+        			currentItemInactive -= direction;
+        			scroll = currentItemInactive;
+        		}
+        	}
         } else {
             super.changeCurrentItem(direction);
         }
@@ -450,6 +480,7 @@ public class InventoryPlayerBattle extends InventoryPlayer {
         super.copyInventory(par1InventoryPlayer);
         if (par1InventoryPlayer instanceof InventoryPlayerBattle) {
             hasChanged = true;
+            this.currentItemInactive = ((InventoryPlayerBattle) par1InventoryPlayer).currentItemInactive;
             this.extraItems = new ItemStack[((InventoryPlayerBattle) par1InventoryPlayer).extraItems.length];
             for (int i = 0; i < extraItems.length; i++) {
                 this.extraItems[i] = ItemStack.copyItemStack(par1InventoryPlayer.getStackInSlot(i + OFFSET));
@@ -463,7 +494,7 @@ public class InventoryPlayerBattle extends InventoryPlayer {
      */
     public ItemStack getCurrentOffhandWeapon(){
         if(isBattlemode()){
-            return getStackInSlot(currentItem+WEAPON_SETS);
+            return getStackInSlot(currentItem+this.getOffsetToInactiveHand());
         }else{
             return null;
         }

@@ -132,7 +132,6 @@ public final class BattlegearRenderHelper {
 
     @SideOnly(Side.CLIENT)
     public static void renderItemInFirstPerson(float frame, Minecraft mc, ItemRenderer itemRenderer) {
-
     	if(dummyEntity == null){
             dummyEntity = new EntityChicken(mc.theWorld);
         }
@@ -313,8 +312,7 @@ public final class BattlegearRenderHelper {
                     if(!BattlegearUtils.RENDER_BUS.post(new PreRenderPlayerElement(preRender, true, PlayerElementType.ItemOffhand, itemToRender))){
                     	
                     	if (!Minecraft.getMinecraft().gameSettings.keyBindAttack.getIsKeyPressed() && Minecraft.getMinecraft().gameSettings.keyBindUseItem.getIsKeyPressed() && ItemStack.areItemStacksEqual(((InventoryPlayerBattle)player.inventory).getCurrentOffhandWeapon(), Minecraft.getMinecraft().playerController.currentItemHittingBlock)) {
-	                    	GL11.glTranslatef(-0.8F, 0.6F, -0.5F);
-	                    	GL11.glScalef(1.4F, 1.6F, 1.4F);
+	                    	GL11.glTranslatef(0F, 0.5F, 0F);
 	                    	if (ItemStack.areItemStacksEqual(((InventoryPlayerBattle)player.inventory).getCurrentOffhandWeapon(), ((InventoryPlayerBattle)player.inventory).getStackInSlot(((InventoryPlayerBattle)player.inventory).currentItem))) {
 	                    		GL11.glTranslatef(0.6F, -0.4F, 0.3F);
 	                    		GL11.glScalef(0.9F, 0.85F, 0.9F);
@@ -376,11 +374,11 @@ public final class BattlegearRenderHelper {
     public static void updateEquippedItem(ItemRenderer itemRenderer, Minecraft mc) {
         IOffhandRender offhandRender = (IOffhandRender)itemRenderer;
         offhandRender.setPrevEquippedProgress(offhandRender.getEquippedProgress());
-        int slot = mc.thePlayer.inventory.currentItem + InventoryPlayerBattle.WEAPON_SETS;
+        int slot = mc.thePlayer.inventory.currentItem + ((InventoryPlayerBattle)mc.thePlayer.inventory).getOffsetToInactiveHand();
         EntityPlayer var1 = mc.thePlayer;
         boolean moreThan = offhandRender.getEquippedItemSlot() > 157;
         ItemStack var2 = ((IBattlePlayer)var1).isBattlemode() && offhandRender.getEquippedItemSlot() > 0 ?
-                var1.inventory.getStackInSlot(moreThan ? offhandRender.getEquippedItemSlot() - 4 : offhandRender.getEquippedItemSlot()) : dummyStack;
+                var1.inventory.getStackInSlot(moreThan ? offhandRender.getEquippedItemSlot() - ((InventoryPlayerBattle)mc.thePlayer.inventory).getOffsetToInactiveHand() : ((InventoryPlayerBattle)var1.inventory).currentItemInactive) : dummyStack;
 
         boolean var3 = offhandRender.getEquippedItemSlot() == slot && var2 == offhandRender.getItemToRender();
 
@@ -460,8 +458,8 @@ public final class BattlegearRenderHelper {
 
     public static void renderItemIn3rdPerson(EntityPlayer par1EntityPlayer, ModelBiped modelBipedMain, float frame) {
 
-    	boolean moreThan = ((InventoryPlayerBattle) par1EntityPlayer.inventory).currentItem + InventoryPlayerBattle.WEAPON_SETS > 157;
-        ItemStack var21 = moreThan ? ((InventoryPlayerBattle) par1EntityPlayer.inventory).getStackInSlot(((InventoryPlayerBattle) par1EntityPlayer.inventory).currentItem - 4 + InventoryPlayerBattle.WEAPON_SETS) : ((InventoryPlayerBattle) par1EntityPlayer.inventory).getStackInSlot(((InventoryPlayerBattle) par1EntityPlayer.inventory).currentItem + InventoryPlayerBattle.WEAPON_SETS);
+    	boolean moreThan = ((InventoryPlayerBattle) par1EntityPlayer.inventory).currentItem + ((InventoryPlayerBattle) par1EntityPlayer.inventory).getOffsetToInactiveHand() > 157;
+        ItemStack var21 = moreThan ? ((InventoryPlayerBattle) par1EntityPlayer.inventory).getStackInSlot(((InventoryPlayerBattle) par1EntityPlayer.inventory).currentItem - 4 + ((InventoryPlayerBattle) par1EntityPlayer.inventory).getOffsetToInactiveHand()) : ((InventoryPlayerBattle) par1EntityPlayer.inventory).getStackInSlot(((InventoryPlayerBattle) par1EntityPlayer.inventory).currentItem + ((InventoryPlayerBattle) par1EntityPlayer.inventory).getOffsetToInactiveHand());
 
         if (var21 != null) {
 

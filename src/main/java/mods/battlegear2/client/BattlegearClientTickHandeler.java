@@ -94,9 +94,14 @@ public final class BattlegearClientTickHandeler {
                     inBattle = ((IBattlePlayer) player).isBattlemode();
                 }else {
                     if(inBattle && !((IBattlePlayer) player).isBattlemode()){
+                    	for (int i = InventoryPlayerBattle.WEAPON_SETS; i < InventoryPlayerBattle.WEAPON_SETS*2; ++i){
+                            if (mc.gameSettings.keyBindsHotbar[i].getIsKeyPressed()){
+                                previousBattlemode = InventoryPlayerBattle.OFFSET + i-InventoryPlayerBattle.WEAPON_SETS;
+                            }
+                        }
                         for (int i = 0; i < InventoryPlayerBattle.WEAPON_SETS; ++i){
                             if (mc.gameSettings.keyBindsHotbar[i].getIsKeyPressed()){
-                                previousBattlemode = InventoryPlayerBattle.OFFSET + i;
+                                ((InventoryPlayerBattle)player.inventory).currentItemInactive = InventoryPlayerBattle.OFFSET + i + InventoryPlayerBattle.WEAPON_SETS;
                             }
                         }
                         player.inventory.currentItem = previousBattlemode;
@@ -111,6 +116,10 @@ public final class BattlegearClientTickHandeler {
     @SideOnly(Side.CLIENT)
     public void onPlayerTick(TickEvent.PlayerTickEvent event){
         if(event.player == mc.thePlayer) {
+        	if (!MysteriumPatchesFixesO.hotSwapped && ((InventoryPlayerBattle)event.player.inventory).currentItem > 153) {
+        		event.player.inventory.currentItem = previousBattlemode;
+                mc.playerController.syncCurrentPlayItem();
+        	}
             if (event.phase == TickEvent.Phase.START) {
                 tickStart(mc.thePlayer);
             } else {
@@ -333,6 +342,6 @@ public final class BattlegearClientTickHandeler {
     }
 
     public static ItemStack getPreviousOffhand(EntityPlayer player){
-        return player.inventory.getStackInSlot(INSTANCE.previousBattlemode+InventoryPlayerBattle.WEAPON_SETS);
+        return player.inventory.getStackInSlot(INSTANCE.previousBattlemode+((InventoryPlayerBattle)player.inventory).getOffsetToInactiveHand());
     }
 }

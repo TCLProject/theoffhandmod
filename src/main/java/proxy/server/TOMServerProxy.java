@@ -98,4 +98,18 @@ public class TOMServerProxy {
 	public boolean isClientPlayer(EntityLivingBase ent) {
 		return false;
 	}
+
+	// Should not be called on the server anyway
+	public boolean isRightClickHeld() {
+		return false;
+	}
+
+	// Should not be called on the server anyway
+	public int getLeftClickCounter() {
+		return 0;
+	}
+
+	// Should not be called on the server anyway
+	public void setLeftClickCounter(int i) {
+	}
 }
