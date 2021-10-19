@@ -14,6 +14,7 @@ public final class OFFMagicNetwork {
 		dispatcher.registerMessage(OverrideSyncServer.Handler.class, OverrideSyncServer.class, 0, Side.SERVER);
 		dispatcher.registerMessage(InactiveHandSyncServer.Handler.class, InactiveHandSyncServer.class, 1, Side.SERVER);
 		dispatcher.registerMessage(InactiveHandSyncClient.Handler.class, InactiveHandSyncClient.class, 2, Side.CLIENT);
+		dispatcher.registerMessage(InteractWithSyncServer.Handler.class, InteractWithSyncServer.class, 3, Side.SERVER);
     }
 
 }

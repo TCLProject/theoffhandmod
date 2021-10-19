@@ -29,7 +29,6 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.EnumAction;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
-import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.MouseEvent;
@@ -39,6 +38,7 @@ import net.minecraftforge.client.event.RenderPlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.Clone;
 import net.tclproject.mysteriumlib.asm.fixes.MysteriumPatchesFixesO;
 import net.tclproject.mysteriumlib.network.OFFMagicNetwork;
+import net.tclproject.theoffhandmod.OffhandConfig;
 import net.tclproject.theoffhandmod.TheOffhandMod;
 import net.tclproject.theoffhandmod.packets.OverrideSyncServer;
 import proxy.client.TOMClientProxy;
@@ -86,33 +86,49 @@ public class OffhandEventHandler {
    )
 	public void onClick(MouseEvent event) 
 	{
+    	OFFMagicNetwork.dispatcher.sendToServer(new OverrideSyncServer(Minecraft.getMinecraft().thePlayer));
 		boolean shouldUndo = false;
-		if(event.button == 0 && event.buttonstate && !BattlegearUtils.reverseactionconfirmed && Minecraft.getMinecraft().thePlayer.inventory.getCurrentItem() != null && Minecraft.getMinecraft().thePlayer.inventory.getCurrentItem().getItem() instanceof ItemBlock) {
-			cancelone=true;
-			boolean reversedIt = false;
-			if (!MysteriumPatchesFixesO.shouldNotOverride) reversedIt = true;
-			MysteriumPatchesFixesO.shouldNotOverride = true;
-			OFFMagicNetwork.dispatcher.sendToServer(new OverrideSyncServer(Minecraft.getMinecraft().thePlayer));
-			Minecraft.getMinecraft().func_147121_ag();
-			if (reversedIt) MysteriumPatchesFixesO.shouldNotOverride = false;
-			OFFMagicNetwork.dispatcher.sendToServer(new OverrideSyncServer(Minecraft.getMinecraft().thePlayer));
+		int leftclick = reversedAttack() ? 1 : 0;
+		int rightclick = reversedUse() ? 0 : 1;
+		if(event.button == leftclick && event.buttonstate && !BattlegearUtils.reverseactionconfirmed && Minecraft.getMinecraft().thePlayer.inventory.getCurrentItem() != null && Minecraft.getMinecraft().thePlayer.inventory.getCurrentItem().getItem() instanceof ItemBlock) {
+			MovingObjectPosition mop = BattlemodeHookContainerClass.getRaytraceBlock(Minecraft.getMinecraft().thePlayer);
+			if (mop != null) {
+				cancelone=true;
+				boolean reversedIt = false;
+				if (!MysteriumPatchesFixesO.shouldNotOverride) reversedIt = true;
+				MysteriumPatchesFixesO.shouldNotOverride = true;
+				OFFMagicNetwork.dispatcher.sendToServer(new OverrideSyncServer(Minecraft.getMinecraft().thePlayer));
+				Minecraft.getMinecraft().func_147121_ag();
+				if (reversedIt) MysteriumPatchesFixesO.shouldNotOverride = false;
+				OFFMagicNetwork.dispatcher.sendToServer(new OverrideSyncServer(Minecraft.getMinecraft().thePlayer));
+			}
 		}
-		if(event.button == 0 && !event.buttonstate && cancelone) {
+		if(event.button == leftclick && !event.buttonstate && cancelone) {
 			cancelone=false;
 		}
-		if(event.button == 0 && !event.buttonstate && !MysteriumPatchesFixesO.leftclicked) shouldUndo = true; 
-		if(event.button == 0 && !event.buttonstate && (MysteriumPatchesFixesO.leftclicked || shouldUndo)) {
+		if(event.button == leftclick && !event.buttonstate && !MysteriumPatchesFixesO.leftclicked) shouldUndo = true; 
+		if(event.button == leftclick && !event.buttonstate && (MysteriumPatchesFixesO.leftclicked || shouldUndo)) {
 			KeyBinding keyCode = Minecraft.getMinecraft().gameSettings.keyBindUseItem;
 			KeyBinding.setKeyBindState(keyCode.getKeyCode(), false);
 			MysteriumPatchesFixesO.leftclicked = false;
 		}
 
-		if(event.button == 1 && event.buttonstate) {
+		if(event.button == rightclick && event.buttonstate) {
 			MysteriumPatchesFixesO.shouldNotOverride = false;
 		}
 	}
 	
+	// Used for if the user decides to rebind attack to right click in order to switch the controls around
+	@SideOnly(Side.CLIENT)
+	public static boolean reversedAttack() {
+		return Minecraft.getMinecraft().gameSettings.keyBindAttack.getKeyCode() == -99;
+	}
 	
+	// Used for if the user decides to rebind use to left click in order to switch the controls around
+	@SideOnly(Side.CLIENT)
+	public static boolean reversedUse() {
+		return Minecraft.getMinecraft().gameSettings.keyBindUseItem.getKeyCode() == -100;
+	}
 
    @SubscribeEvent(
       priority = EventPriority.HIGHEST
@@ -143,8 +159,24 @@ public class OffhandEventHandler {
 			   ItemStack mainHandItem = event.player.getCurrentEquippedItem();
 		       ItemStack offhandItem = ((InventoryPlayerBattle) event.player.inventory).getCurrentOffhandWeapon();
 			   MovingObjectPosition mop = BattlemodeHookContainerClass.getRaytraceBlock(event.player);
-	           BattlemodeHookContainerClass.tryBreakBlockOffhand(mop, offhandItem, mainHandItem, event);
-	           TheOffhandMod.proxy.setLeftClickCounter(10);
+			   if (offhandItem != null && offhandItem.getItem() instanceof ItemBlock) {
+				   if (!BattlegearUtils.usagePriorAttack(offhandItem) && mop != null) {
+					   BattlemodeHookContainerClass.tryBreakBlockOffhand(mop, offhandItem, mainHandItem, event);
+					   TheOffhandMod.proxy.setLeftClickCounter(10);
+				   } else {
+					   Minecraft.getMinecraft().playerController.resetBlockRemoving();
+				   }
+			   } else {
+				   System.out.println(mop);
+				   System.out.println(Minecraft.getMinecraft());
+				   System.out.println(Minecraft.getMinecraft().playerController);
+				   if (mop != null && (!Minecraft.getMinecraft().playerController.onPlayerRightClick(Minecraft.getMinecraft().thePlayer, Minecraft.getMinecraft().theWorld, offhandItem, mop.blockX, mop.blockY, mop.blockZ, mop.sideHit, mop.hitVec) || BattlegearUtils.reverseactionconfirmed)) {
+					   BattlemodeHookContainerClass.tryBreakBlockOffhand(mop, offhandItem, mainHandItem, event);
+					   TheOffhandMod.proxy.setLeftClickCounter(10);
+				   } else {
+					   Minecraft.getMinecraft().playerController.resetBlockRemoving();
+				   }
+			   }
 	       } else {
 	    	   Minecraft.getMinecraft().playerController.resetBlockRemoving();
 	       }
@@ -351,6 +383,11 @@ public class OffhandEventHandler {
 
         gui.drawTexturedModalRect(width / 2 - 69 + 78, height - 22, 0, 0, 81, 22);
         gui.drawTexturedModalRect(width / 2 - 91 + 181, height - 22, 0, 0, 1, 22);
+        
+        if (OffhandConfig.nthSlot) {
+        	gui.drawTexturedModalRect(width / 2 - 69 + 177, height - 22, 0, 0, 21, 22);
+            gui.drawTexturedModalRect(width / 2 - 91 + 220, height - 22, 0, 0, 1, 22);
+        }
 
         gui.drawTexturedModalRect(width / 2 - 91 - 1 + (mc.thePlayer.inventory.currentItem - InventoryPlayerBattle.OFFSET + 5 + (MysteriumPatchesFixesO.hotSwapped ? -BattlemodeHookContainerClass.prevOffhandOffset : 0)) * 20, height - 22 - 1, 0, 22, 24, 22);
         gui.drawTexturedModalRect(width / 2 - 91 - 1 + (((InventoryPlayerBattle)mc.thePlayer.inventory).currentItemInactive - InventoryPlayerBattle.WEAPON_SETS - InventoryPlayerBattle.OFFSET + (MysteriumPatchesFixesO.hotSwapped ? -((InventoryPlayerBattle)Minecraft.getMinecraft().thePlayer.inventory).getOffsetToInactiveHand() : 0)) * 20, height - 22 - 1, 0, 22, 24, 22);
@@ -372,6 +409,13 @@ public class OffhandEventHandler {
             int z = height - 16 - 3;
             renderInventorySlot(InventoryPlayerBattle.OFFSET + i, x, z, partialTicks);
         }
+        
+        if (OffhandConfig.nthSlot) {
+        	int i = 8;
+            int x = width / 2 - 90 + (10) * 20 + 1;
+            int z = height - 16 - 3;
+            renderInventorySlot(InventoryPlayerBattle.OFFSET + i, x, z, partialTicks);
+        }
 
         RenderHelper.disableStandardItemLighting();
         GL11.glDisable(GL12.GL_RESCALE_NORMAL);
@@ -383,7 +427,8 @@ public class OffhandEventHandler {
     {
 		Minecraft mc = Minecraft.getMinecraft();
         ItemStack itemstack = ((InventoryPlayerBattle)mc.thePlayer.inventory).extraItems[p_73832_1_ - InventoryPlayerBattle.OFFSET];
-
+        if (p_73832_1_ == 158) itemstack = ((InventoryPlayerBattle)mc.thePlayer.inventory).getStackInSlot(8);
+        
         if (itemstack != null)
         {
             float f1 = itemstack.animationsToGo - p_73832_4_;

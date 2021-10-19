@@ -17,7 +17,7 @@ buildscript {
 
 apply plugin: 'forge'
 
-version = "1.1a"
+version = "1.1.1a"
 group= "net.tclproject.theoffhandmod" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "theoffhandmod"
 
