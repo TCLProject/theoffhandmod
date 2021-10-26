@@ -40,6 +40,7 @@ import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.tclproject.mysteriumlib.asm.fixes.MysteriumPatchesFixesO;
 import net.tclproject.theoffhandmod.TheOffhandMod;
+import net.tclproject.theoffhandmod.misc.OffhandEventHandler;
 
 public final class BattlegearClientTickHandeler {
 	public static final int FLASH_MAX = 30;
@@ -175,6 +176,10 @@ public final class BattlegearClientTickHandeler {
 
     @SideOnly(Side.CLIENT)
     public void tryCheckUseItem(ItemStack offhand, EntityPlayer player){
+    	MovingObjectPosition mop = BattlemodeHookContainerClass.getRaytraceBlock(player);
+		if (mop != null && OffhandEventHandler.canBlockBeInteractedWith(player.worldObj, mop.blockX, mop.blockY, mop.blockZ) && BattlegearUtils.reverseactionconfirmed) {
+			return;
+		}
         if(BattlegearUtils.usagePriorAttack(offhand) && !MysteriumPatchesFixesO.shouldNotOverride){
             MovingObjectPosition mouseOver = mc.objectMouseOver;
             boolean flag = true;

@@ -3,6 +3,9 @@ package mods.battlegear2;
 import java.util.ArrayList;
 import java.util.List;
 
+import static cpw.mods.fml.common.eventhandler.Event.Result.DEFAULT;
+import static cpw.mods.fml.common.eventhandler.Event.Result.DENY;
+
 import cpw.mods.fml.common.eventhandler.Event;
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -35,7 +38,15 @@ import net.minecraft.entity.IProjectile;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
+import net.minecraft.item.ItemBucket;
+import net.minecraft.item.ItemDoor;
+import net.minecraft.item.ItemRedstone;
+import net.minecraft.item.ItemReed;
+import net.minecraft.item.ItemSeedFood;
+import net.minecraft.item.ItemSign;
+import net.minecraft.item.ItemSkull;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.client.C07PacketPlayerDigging;
 import net.minecraft.util.MathHelper;
@@ -53,11 +64,8 @@ import net.minecraftforge.event.entity.player.PlayerDestroyItemEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.tclproject.mysteriumlib.asm.fixes.MysteriumPatchesFixesO;
-import net.tclproject.mysteriumlib.network.OFFMagicNetwork;
 import net.tclproject.theoffhandmod.TheOffhandMod;
 import net.tclproject.theoffhandmod.misc.OffhandEventHandler;
-import net.tclproject.theoffhandmod.packets.InteractWithSyncServer;
-import net.tclproject.theoffhandmod.packets.OverrideSyncServer;
 
 public final class BattlemodeHookContainerClass {
 
@@ -146,9 +154,15 @@ public final class BattlemodeHookContainerClass {
                 ItemStack mainHandItem = event.entityPlayer.getCurrentEquippedItem();
                 ItemStack offhandItem = ((InventoryPlayerBattle) event.entityPlayer.inventory).getCurrentOffhandWeapon();
                 if (!MysteriumPatchesFixesO.shouldNotOverride) {
-                	event.setCanceled(true);
+                	PlayerInteractEvent.Result blk = event.useBlock;
+                	PlayerInteractEvent.Result itm = event.useItem;
+                	event.useBlock = PlayerInteractEvent.Result.DENY;
         			MovingObjectPosition mop = getRaytraceBlock(event.entityPlayer);
+        			if (TheOffhandMod.proxy.isRightClickHeld() && !MysteriumPatchesFixesO.leftclicked) {
+        				event.setCanceled(true);
+        			}
         			if (mop != null) {
+                    	event.setCanceled(true);
 	        			int 
 	        			i = mop.blockX,
 	        			j = mop.blockY,
@@ -158,13 +172,10 @@ public final class BattlemodeHookContainerClass {
 	                    float f1 = (float)mop.hitVec.yCoord - j;
 	                    float f2 = (float)mop.hitVec.zCoord - k;
 	                    
-	                    if (!event.entityPlayer.isSneaking() && (event.entityPlayer.worldObj.getBlock(i, j, k).onBlockActivated(event.entityPlayer.worldObj, i, j, k, event.entityPlayer, side, f, f1, f2))) {
+	                    if (!event.entityPlayer.isSneaking() && !BattlegearUtils.reverseactionconfirmed && OffhandEventHandler.canBlockBeInteractedWith(event.entityPlayer.worldObj, i, j, k)) {
 	                    	event.setCanceled(false);
-	                    	if (event.entityPlayer.worldObj.getTileEntity(i, j, k) instanceof IInventory) {
-	                    		IInventory te = ((IInventory)event.entityPlayer.worldObj.getTileEntity(i, j, k));
-	                    		te.openInventory();
-	                    		tobeclosed.add(te);
-	                    	}
+	                    	event.useBlock = blk;
+	                    	event.useItem = itm;
 	                    }
         			}
                 	if (event.entityPlayer.worldObj.isRemote && !(BattlegearUtils.reverseactionconfirmed && BattlegearUtils.usagePriorAttack(offhandItem))) sendOffSwingEvent(event, mainHandItem, offhandItem);
@@ -191,6 +202,10 @@ public final class BattlemodeHookContainerClass {
     public static boolean changedHeldItemTooltips = false;
     // used in hostwapping the item to dig with, to remember where to return the main slot to
     public static int prevOffhandOffset;
+    
+    public static boolean isItemBlock(Item item) {
+    	return item instanceof ItemBlock || item instanceof ItemDoor || item instanceof ItemSign || item instanceof ItemReed || item instanceof ItemSeedFood || item instanceof ItemRedstone || item instanceof ItemBucket || item instanceof ItemSkull;
+    }
     
     @SideOnly(Side.CLIENT)
     public static void tryBreakBlockOffhand(MovingObjectPosition objectMouseOver, ItemStack offhandItem, ItemStack mainHandItem, PlayerTickEvent event) {

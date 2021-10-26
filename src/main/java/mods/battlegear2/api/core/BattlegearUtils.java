@@ -6,15 +6,14 @@ import java.io.IOException;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 
-import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.EventBus;
+import mods.battlegear2.BattlemodeHookContainerClass;
 import mods.battlegear2.api.IAllowItem;
 import mods.battlegear2.api.IOffhandDual;
 import mods.battlegear2.api.IUsableItem;
 import mods.battlegear2.api.shield.IShield;
 import mods.battlegear2.api.weapons.IBattlegearWeapon;
 import mods.battlegear2.api.weapons.WeaponRegistry;
-import net.minecraft.client.Minecraft;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -28,10 +27,8 @@ import net.minecraft.item.EnumAction;
 import net.minecraft.item.Item;
 import net.minecraft.item.Item.ToolMaterial;
 import net.minecraft.item.ItemBed;
-import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemBook;
 import net.minecraft.item.ItemBow;
-import net.minecraft.item.ItemBucket;
 import net.minecraft.item.ItemEnderPearl;
 import net.minecraft.item.ItemHangingEntity;
 import net.minecraft.item.ItemHoe;
@@ -52,9 +49,6 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerDestroyItemEvent;
-import net.tclproject.mysteriumlib.network.OFFMagicNetwork;
-import net.tclproject.theoffhandmod.packets.OverrideSyncServer;
-import proxy.client.TOMClientProxy;
 
 /**
  * Store commonly used method, mostly for the {@link EntityPlayer} {@link ItemStack}s management
@@ -229,7 +223,7 @@ public class BattlegearUtils {
      * @return true if it is commonly usable
      */
     public static boolean isCommonlyUsable(Item item){
-        return isBow(item) || item.getClass().toString().equalsIgnoreCase("class D.f") || item instanceof ItemBed || item instanceof ItemHangingEntity || item instanceof ItemBook || item instanceof ItemBlock || item instanceof ItemHoe || item instanceof ItemBucket || item instanceof ItemSnowball || item instanceof ItemEnderPearl;
+        return isBow(item) || item.getClass().toString().equalsIgnoreCase("class D.f") || item instanceof ItemBed || item instanceof ItemHangingEntity || item instanceof ItemBook || BattlemodeHookContainerClass.isItemBlock(item) || item instanceof ItemHoe || item instanceof ItemSnowball || item instanceof ItemEnderPearl;
     }
     // item instanceof ItemCrossbow || item instanceof ItemMounter || item instanceof ItemTeleporter || item instanceof ItemElementalStaff || item instanceof ItemGun || item instanceof ItemNpcMovingPath || item instanceof ItemMachineGun || item instanceof ItemMusket || item instanceof ItemNpcCloner || item instanceof ItemNpcScripter || item instanceof SpellBase || item instanceof ItemNpcWand || item instanceof ItemShield || item instanceof ItemSlingshot || item instanceof ItemSoulstoneFilled || item instanceof ItemSoulstoneEmpty || item instanceof ItemStaff || item instanceof ItemThrowingWeapon || item instanceof ItemThrowingShuriken 
 

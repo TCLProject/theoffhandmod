@@ -12,6 +12,7 @@ import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import mods.battlegear2.BattlemodeHookContainerClass;
+import mods.battlegear2.api.core.BattlegearTranslator;
 import mods.battlegear2.api.core.BattlegearUtils;
 import mods.battlegear2.api.core.IBattlePlayer;
 import mods.battlegear2.api.core.InventoryPlayerBattle;
@@ -24,13 +25,19 @@ import net.minecraft.client.renderer.RenderBlocks;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.EnumAction;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemSword;
+import net.minecraft.item.ItemTool;
+import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.World;
 import net.minecraftforge.client.event.MouseEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
@@ -90,9 +97,9 @@ public class OffhandEventHandler {
 		boolean shouldUndo = false;
 		int leftclick = reversedAttack() ? 1 : 0;
 		int rightclick = reversedUse() ? 0 : 1;
-		if(event.button == leftclick && event.buttonstate && !BattlegearUtils.reverseactionconfirmed && Minecraft.getMinecraft().thePlayer.inventory.getCurrentItem() != null && Minecraft.getMinecraft().thePlayer.inventory.getCurrentItem().getItem() instanceof ItemBlock) {
+		if(event.button == leftclick && event.buttonstate && !BattlegearUtils.reverseactionconfirmed && Minecraft.getMinecraft().thePlayer.inventory.getCurrentItem() != null && BattlemodeHookContainerClass.isItemBlock(Minecraft.getMinecraft().thePlayer.inventory.getCurrentItem().getItem())) {
 			MovingObjectPosition mop = BattlemodeHookContainerClass.getRaytraceBlock(Minecraft.getMinecraft().thePlayer);
-			if (mop != null) {
+			if (mop != null && !canBlockBeInteractedWith(Minecraft.getMinecraft().theWorld, mop.blockX, mop.blockY, mop.blockZ)) {
 				cancelone=true;
 				boolean reversedIt = false;
 				if (!MysteriumPatchesFixesO.shouldNotOverride) reversedIt = true;
@@ -159,7 +166,7 @@ public class OffhandEventHandler {
 			   ItemStack mainHandItem = event.player.getCurrentEquippedItem();
 		       ItemStack offhandItem = ((InventoryPlayerBattle) event.player.inventory).getCurrentOffhandWeapon();
 			   MovingObjectPosition mop = BattlemodeHookContainerClass.getRaytraceBlock(event.player);
-			   if (offhandItem != null && offhandItem.getItem() instanceof ItemBlock) {
+			   if (offhandItem != null && BattlemodeHookContainerClass.isItemBlock(offhandItem.getItem())) {
 				   if (!BattlegearUtils.usagePriorAttack(offhandItem) && mop != null) {
 					   BattlemodeHookContainerClass.tryBreakBlockOffhand(mop, offhandItem, mainHandItem, event);
 					   TheOffhandMod.proxy.setLeftClickCounter(10);
@@ -167,17 +174,14 @@ public class OffhandEventHandler {
 					   Minecraft.getMinecraft().playerController.resetBlockRemoving();
 				   }
 			   } else {
-				   System.out.println(mop);
-				   System.out.println(Minecraft.getMinecraft());
-				   System.out.println(Minecraft.getMinecraft().playerController);
-				   if (mop != null && (!Minecraft.getMinecraft().playerController.onPlayerRightClick(Minecraft.getMinecraft().thePlayer, Minecraft.getMinecraft().theWorld, offhandItem, mop.blockX, mop.blockY, mop.blockZ, mop.sideHit, mop.hitVec) || BattlegearUtils.reverseactionconfirmed)) {
+				   if (mop != null && (!BattlegearUtils.usagePriorAttack(offhandItem) || BattlegearUtils.reverseactionconfirmed) && (!canBlockBeInteractedWith(Minecraft.getMinecraft().theWorld, mop.blockX, mop.blockY, mop.blockZ) || BattlegearUtils.reverseactionconfirmed)) {
 					   BattlemodeHookContainerClass.tryBreakBlockOffhand(mop, offhandItem, mainHandItem, event);
 					   TheOffhandMod.proxy.setLeftClickCounter(10);
 				   } else {
 					   Minecraft.getMinecraft().playerController.resetBlockRemoving();
 				   }
 			   }
-	       } else {
+	       } else if (!TheOffhandMod.proxy.isLeftClickHeld()) {
 	    	   Minecraft.getMinecraft().playerController.resetBlockRemoving();
 	       }
 	   }
@@ -207,6 +211,47 @@ public class OffhandEventHandler {
 			}
        }
    }
+   
+   private static String[] activatedBlockMethodNames = {
+           BattlegearTranslator.getMapedMethodName("Block", "func_149727_a", "onBlockActivated"),
+           BattlegearTranslator.getMapedMethodName("Block", "func_149699_a", "onBlockClicked")};
+   private static Class[][] activatedBlockMethodParams = {
+               new Class[]{World.class, int.class, int.class, int.class, EntityPlayer.class, int.class, float.class, float.class, float.class},
+               new Class[]{World.class, int.class, int.class, int.class, EntityPlayer.class}};
+
+   @SuppressWarnings("unchecked")
+   public static boolean canBlockBeInteractedWith(World worldObj, int x, int y, int z) {
+	   if (worldObj == null) return false;
+	   Block block = worldObj.getBlock(x, y, z);
+	   if (block == null) return false;
+	   if (block.getClass().equals(Block.class)) return false;
+	   try {
+           Class c = block.getClass();
+           while (!(c.equals(Block.class))) {
+               try {
+                   try {
+                       c.getDeclaredMethod(activatedBlockMethodNames[0], activatedBlockMethodParams[0]);
+                       return true;
+                   } catch (NoSuchMethodException ignored) {
+                   }
+
+                   try {
+                       c.getDeclaredMethod(activatedBlockMethodNames[1], activatedBlockMethodParams[1]);
+                       return true;
+                   } catch (NoSuchMethodException ignored) {
+                   }
+               } catch (NoClassDefFoundError ignored) {
+
+               }
+
+               c = c.getSuperclass();
+           }
+
+           return false;
+       } catch (NullPointerException e) {
+           return true;
+       }
+   }
 
    private void onFirstTick(EntityPlayer p) {
 	   
@@ -215,8 +260,12 @@ public class OffhandEventHandler {
 	@SubscribeEvent
 	public void onClonePlayer(Clone event) {
 		((InventoryPlayerBattle)event.entityPlayer.inventory).clearInventory(null, -1);
+		event.entityPlayer.inventory.markDirty();
 		event.entityPlayer.inventoryContainer.detectAndSendChanges();
+		((InventoryPlayerBattle)event.entityPlayer.inventory).currentItem = 150;
 		TheOffhandMod.packetHandler.sendPacketToServer(new BattlegearSyncItemPacket(event.entityPlayer).generatePacket());
+		TheOffhandMod.packetHandler.sendPacketToPlayer(new BattlegearSyncItemPacket(event.entityPlayer).generatePacket(), (EntityPlayerMP)event.entityPlayer);
+		Minecraft.getMinecraft().playerController.syncCurrentPlayItem();
 	}
 	
 	@SideOnly(Side.CLIENT)
@@ -347,13 +396,16 @@ public class OffhandEventHandler {
 	   Minecraft mc = Minecraft.getMinecraft();
 
 	   if (Minecraft.getMinecraft().rightClickDelayTimer == 0 && Minecraft.getMinecraft().gameSettings.keyBindAttack.getIsKeyPressed() && !BattlegearUtils.reverseactionconfirmed && Minecraft.getMinecraft().thePlayer.inventory.getCurrentItem() != null && Minecraft.getMinecraft().thePlayer.inventory.getCurrentItem().getItem() instanceof ItemBlock) { // places blocks continuously if left click is held with block in hand
-		   boolean reversedIt = false;
-		   if (!MysteriumPatchesFixesO.shouldNotOverride) reversedIt = true;
-		   MysteriumPatchesFixesO.shouldNotOverride = true;
-		   OFFMagicNetwork.dispatcher.sendToServer(new OverrideSyncServer(Minecraft.getMinecraft().thePlayer));
-		   mc.func_147121_ag();
-		   if (reversedIt) MysteriumPatchesFixesO.shouldNotOverride = false;
-		   OFFMagicNetwork.dispatcher.sendToServer(new OverrideSyncServer(Minecraft.getMinecraft().thePlayer));
+		   MovingObjectPosition mop = BattlemodeHookContainerClass.getRaytraceBlock(Minecraft.getMinecraft().thePlayer);
+		   if (mop != null && !canBlockBeInteractedWith(Minecraft.getMinecraft().theWorld, mop.blockX, mop.blockY, mop.blockZ)) {
+			   boolean reversedIt = false;
+			   if (!MysteriumPatchesFixesO.shouldNotOverride) reversedIt = true;
+			   MysteriumPatchesFixesO.shouldNotOverride = true;
+			   OFFMagicNetwork.dispatcher.sendToServer(new OverrideSyncServer(Minecraft.getMinecraft().thePlayer));
+			   mc.func_147121_ag();
+			   if (reversedIt) MysteriumPatchesFixesO.shouldNotOverride = false;
+			   OFFMagicNetwork.dispatcher.sendToServer(new OverrideSyncServer(Minecraft.getMinecraft().thePlayer));
+		   }
 	   }
 	   
        if (!((IBattlePlayer) mc.thePlayer).isBattlemode()) {

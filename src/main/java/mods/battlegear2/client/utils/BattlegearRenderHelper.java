@@ -311,7 +311,7 @@ public final class BattlegearRenderHelper {
                     }
                     if(!BattlegearUtils.RENDER_BUS.post(new PreRenderPlayerElement(preRender, true, PlayerElementType.ItemOffhand, itemToRender))){
                     	
-                    	if (!Minecraft.getMinecraft().gameSettings.keyBindAttack.getIsKeyPressed() && Minecraft.getMinecraft().gameSettings.keyBindUseItem.getIsKeyPressed() && ItemStack.areItemStacksEqual(((InventoryPlayerBattle)player.inventory).getCurrentOffhandWeapon(), Minecraft.getMinecraft().playerController.currentItemHittingBlock)) {
+                    	if (!Minecraft.getMinecraft().gameSettings.keyBindAttack.getIsKeyPressed() && Minecraft.getMinecraft().gameSettings.keyBindUseItem.getIsKeyPressed() && ItemStack.areItemStacksEqual(((InventoryPlayerBattle)player.inventory).getCurrentOffhandWeapon(), Minecraft.getMinecraft().playerController.currentItemHittingBlock) && Minecraft.getMinecraft().playerController.isHittingBlock) {
 	                    	GL11.glTranslatef(0F, 0.5F, 0F);
 	                    	if (ItemStack.areItemStacksEqual(((InventoryPlayerBattle)player.inventory).getCurrentOffhandWeapon(), ((InventoryPlayerBattle)player.inventory).getStackInSlot(((InventoryPlayerBattle)player.inventory).currentItem))) {
 	                    		GL11.glTranslatef(0.6F, -0.4F, 0.3F);

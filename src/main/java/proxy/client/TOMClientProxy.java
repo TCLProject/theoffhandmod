@@ -268,6 +268,11 @@ public class TOMClientProxy extends TOMServerProxy {
 	}
 	
 	@Override
+	public boolean isLeftClickHeld() {
+		return Minecraft.getMinecraft().gameSettings.keyBindAttack.getIsKeyPressed();
+	}
+	
+	@Override
 	public int getLeftClickCounter() {
 		return Minecraft.getMinecraft().leftClickCounter;
 	}

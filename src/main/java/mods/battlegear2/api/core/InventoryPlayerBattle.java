@@ -446,20 +446,6 @@ public class InventoryPlayerBattle extends InventoryPlayer {
     }
 
     /**
-     * Drop all slots content, and clear them
-     */
-    @Override
-    public void dropAllItems() {
-    	super.dropAllItems();
-        for (int i = 0; i < this.extraItems.length; ++i) {
-            if (this.extraItems[i] != null) {
-                this.player.func_146097_a(this.extraItems[i], true, false);
-                this.extraItems[i] = null;
-            }
-        }
-    }
-
-    /**
      * UNUSED in vanilla for players, but let's pretend
      * Mark the inventory content as dirty to be send to the client
      */

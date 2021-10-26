@@ -112,4 +112,9 @@ public class TOMServerProxy {
 	// Should not be called on the server anyway
 	public void setLeftClickCounter(int i) {
 	}
+
+	// Should not be called on the server anyway
+	public boolean isLeftClickHeld() {
+		return false;
+	}
 }

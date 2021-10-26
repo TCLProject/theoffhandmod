@@ -1,6 +1,7 @@
 # The Offhand Mod
 
 The Offhand Mod is a minecraft mod continued from the [Mine&Blade Battlegear 2](https://github.com/Mine-and-blade-admin/Battlegear2) mod for Minecraft Forge 1.7.10 that aims to change it's dual wielding mechanics to add a permanently playable and usable offhand mechanic to the game.
+Please do note, that this mod does not perfectly work with multiplayer. It was made with multiplayer in mind, but I most likely have missed something (please do report multiplayer bugs if found).
 
 ## Changes
 
