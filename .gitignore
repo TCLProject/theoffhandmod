@@ -1,5 +1,5 @@
 #################
-## Eclipse
+## IDEs
 #################
 
 *.pydevproject
@@ -8,6 +8,9 @@
 bin/
 tmp/
 *.tmp
+*.iws
+*.iml
+*.ipr
 *.bak
 *.swp
 *~.nib

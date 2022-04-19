@@ -1,5 +1,6 @@
 package mods.battlegear2.client;
 
+import net.minecraft.item.ItemMonsterPlacer;
 import org.lwjgl.input.Keyboard;
 
 import cpw.mods.fml.client.FMLClientHandler;
@@ -199,9 +200,11 @@ public final class BattlegearClientTickHandeler {
                         final int size = offhand.stackSize;
                         int i1 = mouseOver.sideHit;
                         PlayerEventChild.UseOffhandItemEvent useItemEvent = new PlayerEventChild.UseOffhandItemEvent(new PlayerInteractEvent(player, PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK, j, k, l, i1, player.worldObj), offhand);
-                        if (!MinecraftForge.EVENT_BUS.post(useItemEvent) && onPlayerPlaceBlock(mc.playerController, player, offhand, j, k, l, i1, mouseOver.hitVec)) {
-                            ((IBattlePlayer) player).swingOffItem();
-                            flag = false;
+                        if (player.capabilities.allowEdit || !BattlemodeHookContainerClass.isItemBlock(offhand.getItem())) {
+                            if (!MinecraftForge.EVENT_BUS.post(useItemEvent) && onPlayerPlaceBlock(mc.playerController, player, offhand, j, k, l, i1, mouseOver.hitVec)) {
+                                ((IBattlePlayer) player).swingOffItem();
+                                flag = false;
+                            }
                         }
                         if (offhand == null)
                         {

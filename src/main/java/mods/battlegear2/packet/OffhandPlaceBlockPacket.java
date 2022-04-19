@@ -11,6 +11,7 @@ import mods.battlegear2.api.core.BattlegearUtils;
 import mods.battlegear2.api.core.InventoryPlayerBattle;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.server.S02PacketChat;
 import net.minecraft.network.play.server.S23PacketBlockChange;
@@ -140,21 +141,21 @@ public final class OffhandPlaceBlockPacket extends AbstractMBPacket{
             ((EntityPlayerMP) player).playerNetServerHandler.sendPacket(new S23PacketBlockChange(i, j, k, player.getEntityWorld()));
         }
         offhandWeapon = ((InventoryPlayerBattle) player.inventory).getCurrentOffhandWeapon();
+        if (offhandWeapon != null && BattlemodeHookContainerClass.isItemBlock(offhandWeapon.getItem())) {
 
-        if (offhandWeapon != null && offhandWeapon.stackSize <= 0){
-            BattlegearUtils.setPlayerOffhandItem(player, null);
-            offhandWeapon = null;
-        }
-        if (offhandWeapon == null || offhandWeapon.getMaxItemUseDuration() == 0)
-        {
-            ((EntityPlayerMP) player).isChangingQuantityOnly = true;
-            BattlegearUtils.setPlayerOffhandItem(player, ItemStack.copyItemStack(((InventoryPlayerBattle) player.inventory).getCurrentOffhandWeapon()));
-            player.openContainer.detectAndSendChanges();
-            ((EntityPlayerMP) player).isChangingQuantityOnly = false;
+            if (offhandWeapon != null && offhandWeapon.stackSize <= 0) {
+                BattlegearUtils.setPlayerOffhandItem(player, null);
+                offhandWeapon = null;
+            }
+            if (offhandWeapon == null || offhandWeapon.getMaxItemUseDuration() == 0) {
+                ((EntityPlayerMP) player).isChangingQuantityOnly = true;
+                BattlegearUtils.setPlayerOffhandItem(player, ItemStack.copyItemStack(((InventoryPlayerBattle) player.inventory).getCurrentOffhandWeapon()));
+                player.openContainer.detectAndSendChanges();
+                ((EntityPlayerMP) player).isChangingQuantityOnly = false;
 
-            if (!ItemStack.areItemStacksEqual(((InventoryPlayerBattle) player.inventory).getCurrentOffhandWeapon(), this.itemStack))
-            {
-            	TheOffhandMod.packetHandler.sendPacketToPlayer(new BattlegearSyncItemPacket(player).generatePacket(), (EntityPlayerMP) player);
+                if (!ItemStack.areItemStacksEqual(((InventoryPlayerBattle) player.inventory).getCurrentOffhandWeapon(), this.itemStack)) {
+                    TheOffhandMod.packetHandler.sendPacketToPlayer(new BattlegearSyncItemPacket(player).generatePacket(), (EntityPlayerMP) player);
+                }
             }
         }
     }
@@ -206,6 +207,8 @@ public final class OffhandPlaceBlockPacket extends AbstractMBPacket{
             {
                 itemStack.setItemDamage(meta);
                 itemStack.stackSize = size;
+            } else {
+//                itemStack.stackSize--;
             }
             if (itemStack.stackSize <= 0) ForgeEventFactory.onPlayerDestroyItem(playerMP, itemStack);
         }

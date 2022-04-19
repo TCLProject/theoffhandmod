@@ -38,16 +38,7 @@ import net.minecraft.entity.IProjectile;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.IInventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemBlock;
-import net.minecraft.item.ItemBucket;
-import net.minecraft.item.ItemDoor;
-import net.minecraft.item.ItemRedstone;
-import net.minecraft.item.ItemReed;
-import net.minecraft.item.ItemSeedFood;
-import net.minecraft.item.ItemSign;
-import net.minecraft.item.ItemSkull;
-import net.minecraft.item.ItemStack;
+import net.minecraft.item.*;
 import net.minecraft.network.play.client.C07PacketPlayerDigging;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition;
@@ -64,6 +55,7 @@ import net.minecraftforge.event.entity.player.PlayerDestroyItemEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.tclproject.mysteriumlib.asm.fixes.MysteriumPatchesFixesO;
+import net.tclproject.theoffhandmod.OffhandConfig;
 import net.tclproject.theoffhandmod.TheOffhandMod;
 import net.tclproject.theoffhandmod.misc.OffhandEventHandler;
 
@@ -108,16 +100,18 @@ public final class BattlemodeHookContainerClass {
             return;
         }
 
-        ItemStack mainhand = event.entityPlayer.getCurrentEquippedItem();
-        float reachMod = 0;
-        if(mainhand == null)
-            reachMod = -2.2F;//Reduce bare hands range
-        else if(mainhand.getItem() instanceof ItemBlock)
-            reachMod = -2.1F;//Reduce block in hands range too
-        else if(mainhand.getItem() instanceof IExtendedReachWeapon)
-            reachMod = ((IExtendedReachWeapon) mainhand.getItem()).getReachModifierInBlocks(mainhand);
-        if(reachMod < 0 && reachMod + (event.entityPlayer.capabilities.isCreativeMode?5.0F:4.5F) < event.entityPlayer.getDistanceToEntity(event.target)){
-            event.setCanceled(true);
+        if (!OffhandConfig.noReachLimiting) {
+            ItemStack mainhand = event.entityPlayer.getCurrentEquippedItem();
+            float reachMod = 0;
+            if (mainhand == null)
+                reachMod = -2.2F;//Reduce bare hands range
+            else if (mainhand.getItem() instanceof ItemBlock)
+                reachMod = -2.1F;//Reduce block in hands range too
+            else if (mainhand.getItem() instanceof IExtendedReachWeapon)
+                reachMod = ((IExtendedReachWeapon) mainhand.getItem()).getReachModifierInBlocks(mainhand);
+            if (reachMod < 0 && reachMod + (event.entityPlayer.capabilities.isCreativeMode ? 5.0F : 4.5F) < event.entityPlayer.getDistanceToEntity(event.target)) {
+                event.setCanceled(true);
+            }
         }
     }
     
@@ -153,6 +147,11 @@ public final class BattlemodeHookContainerClass {
             if(event.action == PlayerInteractEvent.Action.RIGHT_CLICK_AIR || event.action == PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) {//Right click
                 ItemStack mainHandItem = event.entityPlayer.getCurrentEquippedItem();
                 ItemStack offhandItem = ((InventoryPlayerBattle) event.entityPlayer.inventory).getCurrentOffhandWeapon();
+                if (event.action == PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK && mainHandItem != null && mainHandItem.getItem() instanceof ItemMonsterPlacer) {
+                    if (event.world.isRemote && !event.entityPlayer.capabilities.isCreativeMode) {
+                        mainHandItem.stackSize--;
+                    }
+                }
                 if (!MysteriumPatchesFixesO.shouldNotOverride) {
                 	PlayerInteractEvent.Result blk = event.useBlock;
                 	PlayerInteractEvent.Result itm = event.useItem;

@@ -13,6 +13,8 @@ public class OffhandConfig {
 	public static Configuration config;
 	public static boolean btgearItems = false;
 	public static boolean nthSlot = false;
+	public static boolean noReachLimiting = false;
+	public static boolean doubleBow = true;
 
 	public static String CATEGORY_EXTRA = "Extras";
 
@@ -28,9 +30,11 @@ public class OffhandConfig {
 	}
 
 	private static void loadConfiguration() {
-		
+
+		noReachLimiting = config.getBoolean("Disable reach limiting", CATEGORY_EXTRA, false, "If true, battlegear reach penalties will not be applied");
 		nthSlot = config.getBoolean("Render and use the 9th slot API", CATEGORY_EXTRA, false, "Makes the 9th slot from the vanilla hotbar render beside this mods hotbar and makes it use the special API I provide (by default, this does absolutely nothing).");
 		btgearItems = config.getBoolean("Battlegear 2 Blocks, Items and Enchants", CATEGORY_EXTRA, false, "Option to re-enable the items, blocks, enchants and other content battlegear adds.");
+		doubleBow = config.getBoolean("Double Bow", CATEGORY_EXTRA, true, "Option to disable the double-bow-use feature.");
 
 		if (config.hasChanged()) {
 			config.save();

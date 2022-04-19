@@ -3,7 +3,7 @@
   "modid": "theoffhandmod",
   "name": "The Offhand Mod",
   "description": "My interpretation of how the offhand should exist in Minecraft.",
-  "version": "1.1.1a",
+  "version": "1.1.1b",
   "mcversion": "${mcversion}",
   "url": "",
   "updateUrl": "",

@@ -23,19 +23,8 @@ import net.minecraft.entity.ai.attributes.BaseAttributeMap;
 import net.minecraft.entity.boss.EntityDragonPart;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.item.EnumAction;
-import net.minecraft.item.Item;
+import net.minecraft.item.*;
 import net.minecraft.item.Item.ToolMaterial;
-import net.minecraft.item.ItemBed;
-import net.minecraft.item.ItemBook;
-import net.minecraft.item.ItemBow;
-import net.minecraft.item.ItemEnderPearl;
-import net.minecraft.item.ItemHangingEntity;
-import net.minecraft.item.ItemHoe;
-import net.minecraft.item.ItemSnowball;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemSword;
-import net.minecraft.item.ItemTool;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTSizeTracker;
 import net.minecraft.nbt.NBTTagCompound;
@@ -223,7 +212,7 @@ public class BattlegearUtils {
      * @return true if it is commonly usable
      */
     public static boolean isCommonlyUsable(Item item){
-        return isBow(item) || item.getClass().toString().equalsIgnoreCase("class D.f") || item instanceof ItemBed || item instanceof ItemHangingEntity || item instanceof ItemBook || BattlemodeHookContainerClass.isItemBlock(item) || item instanceof ItemHoe || item instanceof ItemSnowball || item instanceof ItemEnderPearl;
+        return isBow(item) || item.getClass().toString().equalsIgnoreCase("class D.f") || item instanceof ItemBed || item instanceof ItemHangingEntity || item instanceof ItemBook || BattlemodeHookContainerClass.isItemBlock(item) || item instanceof ItemHoe || item instanceof ItemSnowball || item instanceof ItemEnderPearl || item instanceof ItemEgg || item instanceof ItemMonsterPlacer;
     }
     // item instanceof ItemCrossbow || item instanceof ItemMounter || item instanceof ItemTeleporter || item instanceof ItemElementalStaff || item instanceof ItemGun || item instanceof ItemNpcMovingPath || item instanceof ItemMachineGun || item instanceof ItemMusket || item instanceof ItemNpcCloner || item instanceof ItemNpcScripter || item instanceof SpellBase || item instanceof ItemNpcWand || item instanceof ItemShield || item instanceof ItemSlingshot || item instanceof ItemSoulstoneFilled || item instanceof ItemSoulstoneEmpty || item instanceof ItemStaff || item instanceof ItemThrowingWeapon || item instanceof ItemThrowingShuriken 
 

@@ -35,7 +35,6 @@ public final class BattlegearClientEvents {
     //public static final ResourceLocation patterns = new ResourceLocation("battlegear2", "textures/heraldry/Patterns-small.png");
     //public static int storageIndex;
 
-    private static final int MAIN_INV = InventoryPlayer.getHotbarSize();
     public static final BattlegearClientEvents INSTANCE = new BattlegearClientEvents();
 
     private BattlegearClientEvents(){
